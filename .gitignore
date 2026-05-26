@@ -17,3 +17,13 @@ client/dist/
 # IDE
 .vscode/settings.json
 *.log
+
+# Python venv
+api/venv/
+ml/venv/
+
+# Environment files
+.env
+api/.env
+ml/.env
+client/.env
