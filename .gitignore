@@ -27,3 +27,6 @@ ml/venv/
 api/.env
 ml/.env
 client/.env
+
+# Architechture
+DESIGN.md
