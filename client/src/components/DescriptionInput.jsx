@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const EXAMPLES = [
   "I'm building a social media app with user auth and real-time notifications...",
@@ -16,7 +17,7 @@ const INITIAL_TYPE_STATE = {
   isPaused: false,
 };
 
-export default function DescriptionInput({ onAnalyze, loading }) {
+export default function DescriptionInput({ onAnalyze, onReset, loading }) {
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [placeholder, setPlaceholder] = useState("");
@@ -69,13 +70,17 @@ export default function DescriptionInput({ onAnalyze, loading }) {
   }, [ts, description]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-  const canSubmit = description.trim().length >= 10 && !loading;
   const charCount = description.length;
   const charWarn = charCount > 1800;
+  const descriptionReady = description.trim().length >= 10;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (loading) return;
+    if (!descriptionReady) {
+      toast.error("Description must be at least 10 characters.");
+      return;
+    }
     onAnalyze({
       description: description.trim(),
       projectName: projectName.trim() || "my-app",
@@ -116,7 +121,7 @@ export default function DescriptionInput({ onAnalyze, loading }) {
           <div className="relative">
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => { setDescription(e.target.value); onReset?.(); }}
               placeholder={placeholder}
               maxLength={2000}
               rows={6}
@@ -139,18 +144,19 @@ export default function DescriptionInput({ onAnalyze, loading }) {
         <div>
           <motion.button
             type="submit"
-            disabled={!canSubmit}
-            whileHover={canSubmit ? { scale: 1.015 } : undefined}
-            whileTap={canSubmit ? { scale: 0.975 } : undefined}
-            className="px-7 py-3 rounded-md text-sm font-semibold
-                       disabled:opacity-40 disabled:cursor-not-allowed
-                       transition-shadow duration-200"
+            disabled={loading}
+            whileHover={!loading ? { scale: 1.015 } : undefined}
+            whileTap={!loading ? { scale: 0.975 } : undefined}
+            className="px-7 py-3 rounded-md text-sm font-semibold transition-shadow duration-200"
             style={{
               background: "#f97316",
               color: "#080808",
-              boxShadow: canSubmit
-                ? "0 0 24px rgba(249, 115, 22, 0.35)"
-                : "none",
+              opacity: loading ? 0.4 : descriptionReady ? 1 : 0.55,
+              cursor: loading ? "not-allowed" : "pointer",
+              boxShadow:
+                descriptionReady && !loading
+                  ? "0 0 24px rgba(249, 115, 22, 0.35)"
+                  : "none",
             }}
           >
             {loading ? (

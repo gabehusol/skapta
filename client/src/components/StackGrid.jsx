@@ -99,21 +99,20 @@ export default function StackGrid({ recommendations, onGenerate }) {
         transition={{ delay: 0.55 }}
         className="flex flex-col items-stretch gap-3"
       >
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={onGenerate}
-          className="w-full py-4 rounded-md text-base font-semibold"
+        <button
+          disabled
+          title="Coming soon"
+          className="w-full py-4 rounded-md text-base font-semibold cursor-not-allowed"
           style={{
             background: '#f97316',
             color: '#080808',
-            boxShadow: '0 0 40px rgba(249,115,22,0.22)',
+            opacity: 0.35,
           }}
         >
           Generate Project →
-        </motion.button>
-        <p className="text-center text-xs text-faint">
-          Downloads a configured, ready-to-run project ZIP
+        </button>
+        <p className="text-center text-xs" style={{ color: '#444444' }}>
+          Coming soon — project ZIP generation is not yet implemented
         </p>
       </motion.div>
     </motion.div>
