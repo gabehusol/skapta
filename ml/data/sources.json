@@ -1,0 +1,19 @@
+{
+  "React": ["https://react.dev/learn"],
+  "Next.js": ["https://nextjs.org/docs"],
+  "Vue": ["https://vuejs.org/guide/introduction"],
+  "Express": ["https://expressjs.com/en/starter/installing.html"],
+  "FastAPI": ["https://fastapi.tiangolo.com/tutorial/"],
+  "Django": ["https://docs.djangoproject.com/en/5.0/intro/"],
+  "PostgreSQL": ["https://www.postgresql.org/docs/current/tutorial.html"],
+  "MongoDB": ["https://www.mongodb.com/docs/manual/introduction/"],
+  "Supabase": ["https://supabase.com/docs"],
+  "Auth0": ["https://auth0.com/docs/quickstarts"],
+  "NextAuth": ["https://next-auth.js.org/getting-started/introduction"],
+  "Firebase": ["https://firebase.google.com/docs/auth"],
+  "Vercel": ["https://vercel.com/docs"],
+  "Railway": ["https://docs.railway.app"],
+  "Docker": ["https://docs.docker.com/get-started/"],
+  "Socket.io": ["https://socket.io/docs/v4/"],
+  "Stripe": ["https://stripe.com/docs/development/quickstart"]
+}
