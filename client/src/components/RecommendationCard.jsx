@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-
-// Framer Motion variant — called by parent stagger container
-export const cardVariants = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
-};
+import { cardVariants } from "../lib/variants";
 
 export default function RecommendationCard({ category, data, onOverride }) {
   const [selected, setSelected] = useState(data.choice);

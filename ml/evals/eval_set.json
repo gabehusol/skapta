@@ -1,0 +1,167 @@
+[
+  {
+    "id": "test_001",
+    "description": "I'm building a simple todo app with user accounts and a REST API",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_002",
+    "description": "I'm building a real-time chat application with user presence indicators, typing indicators, and message history",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_003",
+    "description": "I'm building a blog platform with SEO optimization, server-side rendering, and a content management system",
+    "expected": {
+      "frontend": "Next.js",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "NextAuth",
+      "deployment": "Vercel"
+    }
+  },
+  {
+    "id": "test_004",
+    "description": "I'm building a machine learning dashboard to visualize model performance metrics and run data pipelines",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "FastAPI",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_005",
+    "description": "I'm building a marketing website with a blog, landing pages, and contact forms that need great SEO",
+    "expected": {
+      "frontend": "Next.js",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "NextAuth",
+      "deployment": "Vercel"
+    }
+  },
+  {
+    "id": "test_006",
+    "description": "I'm building an e-commerce store with product listings, a shopping cart, and Stripe payments",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_007",
+    "description": "I'm building a social media app with user profiles, posts, likes, follows, and image uploads",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_008",
+    "description": "I'm building a Next.js app with authentication and need a database, keeping everything in one ecosystem",
+    "expected": {
+      "frontend": "Next.js",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "NextAuth",
+      "deployment": "Vercel"
+    }
+  },
+  {
+    "id": "test_009",
+    "description": "I'm building a REST API for a mobile app that handles user data, push notifications, and file uploads",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_010",
+    "description": "I'm building a content-heavy news site with an admin panel, editorial workflow, and thousands of articles",
+    "expected": {
+      "frontend": "Next.js",
+      "backend": "Django",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_011",
+    "description": "I'm building a data analytics platform with Python data processing, charts, and a REST API",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "FastAPI",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_012",
+    "description": "I'm building a project management tool with real-time collaboration, task boards, and team workspaces",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_013",
+    "description": "I'm building a SaaS app with subscription billing using Stripe, user dashboards, and team accounts",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  },
+  {
+    "id": "test_014",
+    "description": "I'm building a lightweight Vue app to display a portfolio and contact form with no backend needed",
+    "expected": {
+      "frontend": "Vue + Vite",
+      "backend": "Node.js + Express",
+      "database": "PostgreSQL",
+      "auth": "Auth0",
+      "deployment": "Vercel"
+    }
+  },
+  {
+    "id": "test_015",
+    "description": "I'm building a document storage app where users can upload, organise and share files with flexible metadata",
+    "expected": {
+      "frontend": "React + Vite",
+      "backend": "Node.js + Express",
+      "database": "MongoDB",
+      "auth": "Auth0",
+      "deployment": "Railway"
+    }
+  }
+]

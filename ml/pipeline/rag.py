@@ -3,7 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain.schema import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 
 from retrieval.query import search
 from retrieval.reranker import rerank
@@ -24,7 +24,7 @@ SUPPORTED_OPTIONS = {
     "additional": ["Docker + Docker Compose", "GitHub Actions CI/CD", "Socket.io", "Stripe", "Cloudinary / Supabase Storage"]
 }
 
-#JSON Schema itll follow
+#JSON Schema itll follow — LLM only generates recommendations, not retrieved_sources
 RESPONSE_SCHEMA = {
     "recommendations": {
         "frontend": {"choice": "string", "reason": "string", "alternatives": ["string"]},
@@ -33,16 +33,20 @@ RESPONSE_SCHEMA = {
         "auth": {"choice": "string", "reason": "string", "alternatives": ["string"]},
         "deployment": {"choice": "string", "reason": "string", "alternatives": ["string"]},
         "additional": ["string"]
-    },
-    "retrieved_sources": [
-        {"technology": "string", "source_url": "string", "relevance_score": 0.0}
-    ]
+    }
 }
 
 SYSTEM_PROMPT = """You are Skapta, an expert software architect. You recommend tech stacks based on project descriptions.
 
 Only recommend from these supported options:
 {supported_options}
+
+Use these as strong defaults, but use judgment based on the project description:
+- If database is Supabase and auth requirements are simple, prefer Supabase Auth — it integrates natively and reduces complexity
+- If database is Supabase but the project needs enterprise auth, social login at scale, or complex roles, Auth0 may be better
+- If frontend is Next.js, prefer NextAuth unless Supabase Auth is the better fit
+- If the app needs a persistent database, prefer Railway over Vercel for deployment
+- If the app needs real-time features (chat, notifications, live updates), include Socket.io in additional
 
 You have access to these documentation excerpts to ground your recommendations:
 {retrieved_chunks}
@@ -101,11 +105,26 @@ def recommend(description: str) -> dict:
 
     response = llm.invoke(messages)
 
-    #Parse then return the json
+    #Parse LLM response
     try:
-        return parse_llm_response(response.content)
+        result = parse_llm_response(response.content)
     except json.JSONDecodeError as e:
         raise ValueError(f"LLM returned invalid JSON: {e}\nRaw response: {response.content}")
+
+    # Build retrieved_sources from actual reranked chunks — not LLM-generated
+    seen = set()
+    retrieved_sources = []
+    for chunk in reranked:
+        key = (chunk["technology"], chunk["source_url"])
+        if key not in seen:
+            seen.add(key)
+            retrieved_sources.append({
+                "technology": chunk["technology"],
+                "source_url": chunk["source_url"],
+                "relevance_score": round(chunk["rerank_score"], 4),
+            })
+    result["retrieved_sources"] = retrieved_sources
+    return result
 
 
 if __name__ == "__main__":
