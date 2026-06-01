@@ -43,17 +43,19 @@ def validate_stack(stack: StackSelection) -> list[str]:
     deployment = _normalize(stack.deployment)
 
     # Explicit blocked combinations
+    db_auth_blocked = False
     for blocked_a, blocked_b, msg in _BLOCKED:
         if blocked_a in db and blocked_b in auth:
             errors.append(msg)
+            db_auth_blocked = True
         if blocked_a in frontend and blocked_b in backend:
             errors.append(msg)
         if blocked_a in deployment and blocked_b in backend:
             errors.append(msg)
 
-    # DB → Auth compatibility
+    # DB → Auth compatibility (skip if an explicit block already covered this pair)
     db_key = next((k for k in _DB_AUTH if k in db), None)
-    if db_key:
+    if db_key and not db_auth_blocked:
         allowed_auths = _DB_AUTH[db_key]
         auth_matched = any(a in auth for a in allowed_auths)
         if not auth_matched:
@@ -75,7 +77,14 @@ def validate_stack(stack: StackSelection) -> list[str]:
                 f"{stack.frontend} is not compatible with {stack.backend}."
             )
 
-    return errors
+    # Dedupe while preserving order
+    seen: set[str] = set()
+    unique: list[str] = []
+    for e in errors:
+        if e not in seen:
+            seen.add(e)
+            unique.append(e)
+    return unique
 
 
 def generate_project(request: GenerateRequest) -> io.BytesIO:

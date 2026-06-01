@@ -14,6 +14,15 @@ def _load(rel_path: str, project_name: str) -> str:
     return content.replace("{{PROJECT_NAME}}", project_name)
 
 
+# Frontend files that belong at the client root; everything else goes under client/src/
+_FRONTEND_ROOT_FILES = {
+    "vite.config.ts",
+    "tsconfig.json",
+    "package.json",
+    "index.html",
+}
+
+
 def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
     frontend = stack.frontend.lower()
 
@@ -36,7 +45,11 @@ def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, st
     for f in src_dir.iterdir():
         if f.is_file():
             dest_name = f.name.replace(".template", "")
-            files[f"{dest}/{dest_name}"] = _load(f"{base}/{f.name}", project_name)
+            if dest_name in _FRONTEND_ROOT_FILES:
+                target = f"{dest}/{dest_name}"
+            else:
+                target = f"{dest}/src/{dest_name}"
+            files[target] = _load(f"{base}/{f.name}", project_name)
 
     return files
 
@@ -160,39 +173,50 @@ def _database_snippets(stack: StackSelection, project_name: str) -> dict[str, st
     return files
 
 
-def _deployment_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    deployment = stack.deployment.lower()
+def _docker_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
     backend = stack.backend.lower()
     db = stack.database.lower()
+    docker_dir = SNIPPETS_DIR / "deployment/docker"
+
+    files: dict[str, str] = {}
+    if not docker_dir.exists():
+        return files
+
+    if "fastapi" in backend or "django" in backend:
+        dockerfile = "Dockerfile.python"
+    else:
+        dockerfile = "Dockerfile.node"
+
+    df = docker_dir / dockerfile
+    if df.exists():
+        # docker-compose builds with context ./server, so the Dockerfile lives there
+        files["server/Dockerfile"] = _load(f"deployment/docker/{dockerfile}", project_name)
+
+    if "mongo" in db:
+        compose = "docker-compose.node-mongo.yml"
+    elif "fastapi" in backend or "django" in backend:
+        compose = "docker-compose.python-pg.yml"
+    else:
+        compose = "docker-compose.node-pg.yml"
+
+    cf = docker_dir / compose
+    if cf.exists():
+        files["docker-compose.yml"] = _load(f"deployment/docker/{compose}", project_name)
+
+    return files
+
+
+def _deployment_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
+    deployment = stack.deployment.lower()
+    additional = " ".join(stack.additional).lower()
 
     files: dict[str, str] = {}
 
-    if "docker" in deployment or "aws" in deployment:
-        docker_dir = SNIPPETS_DIR / "deployment/docker"
-        if not docker_dir.exists():
-            return files
+    # Docker can be the deployment target or an "additional" selection
+    if "docker" in deployment or "aws" in deployment or "docker" in additional:
+        files.update(_docker_snippets(stack, project_name))
 
-        if "fastapi" in backend or "django" in backend:
-            dockerfile = "Dockerfile.python"
-        else:
-            dockerfile = "Dockerfile.node"
-
-        df = docker_dir / dockerfile
-        if df.exists():
-            files[dockerfile] = _load(f"deployment/docker/{dockerfile}", project_name)
-
-        if "mongo" in db:
-            compose = "docker-compose.node-mongo.yml"
-        elif "fastapi" in backend or "django" in backend:
-            compose = "docker-compose.python-pg.yml"
-        else:
-            compose = "docker-compose.node-pg.yml"
-
-        cf = docker_dir / compose
-        if cf.exists():
-            files["docker-compose.yml"] = _load(f"deployment/docker/{compose}", project_name)
-
-    elif "vercel" in deployment:
+    if "vercel" in deployment:
         vf = SNIPPETS_DIR / "deployment/vercel/vercel.json"
         if vf.exists():
             files["vercel.json"] = _load("deployment/vercel/vercel.json", project_name)
