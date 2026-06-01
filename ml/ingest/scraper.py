@@ -28,8 +28,12 @@ def extract_text(html: str) -> str:
         for element in soup.find_all(tag):
             element.decompose()
 
-    text = soup.get_text(separator=" ")
-    return text.strip() 
+    # Focus on the main content area; fall back to body, then whole soup
+    content = soup.find("main") or soup.find("article") or soup.find("body") or soup
+
+    text = content.get_text(separator=" ", strip=True)
+    # Collapse runs of whitespace (spaces, newlines, tabs) into single spaces
+    return " ".join(text.split())
     
 #Scrape multiple URLs with a 1s rate limit
 def scrape_urls(urls: list[str]) -> list[dict]:
