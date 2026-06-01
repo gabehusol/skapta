@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import RecommendationCard, { cardVariants } from './RecommendationCard'
+import RecommendationCard from './RecommendationCard'
+import { cardVariants } from '../lib/variants'
 
 const MAIN_CATEGORIES = ['frontend', 'backend', 'database', 'auth', 'deployment']
 
