@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from models.generate import StackSelection, GenerationOptions
 
@@ -20,6 +19,8 @@ _FRONTEND_ROOT_FILES = {
     "tsconfig.json",
     "package.json",
     "index.html",
+    ".eslintrc.cjs",
+    "prettier.config.cjs",
 }
 
 
@@ -248,10 +249,11 @@ def _shared_snippets(stack: StackSelection, project_name: str) -> dict[str, str]
     if gi.exists():
         files[".gitignore"] = _load(f"shared/{gi.name}", project_name)
 
-    for name in ("prettier.config.js", "eslint.config.js", "tsconfig.base.json"):
-        f = shared_dir / name
-        if f.exists():
-            files[name] = _load(f"shared/{name}", project_name)
+    # tsconfig.base.json lives at the project root; both client and server extend it.
+    # (Lint/format configs are emitted inside client/ where their deps are installed.)
+    base = shared_dir / "tsconfig.base.json"
+    if base.exists():
+        files["tsconfig.base.json"] = _load("shared/tsconfig.base.json", project_name)
 
     return files
 

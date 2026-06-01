@@ -21,7 +21,7 @@ export function useGenerate() {
 
       toast.success('Project downloaded — follow the README to get started.')
     } catch (err) {
-      const detail = err?.response?.data?.detail
+      const detail = await extractErrorDetail(err)
       if (detail) {
         toast.error(`Incompatible stack: ${detail}`)
       } else {
@@ -33,4 +33,17 @@ export function useGenerate() {
   }
 
   return { loading, generate }
+}
+
+// The API streams a blob, so an error response body is also a Blob — read and parse it.
+async function extractErrorDetail(err) {
+  const data = err?.response?.data
+  if (!data) return null
+  try {
+    const text = data instanceof Blob ? await data.text() : data
+    const parsed = typeof text === 'string' ? JSON.parse(text) : text
+    return parsed?.detail ?? null
+  } catch {
+    return null
+  }
 }
