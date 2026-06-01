@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import RecommendationCard, { cardVariants } from './RecommendationCard'
+import { useGenerate } from '../hooks/useGenerate'
 
 const MAIN_CATEGORIES = ['frontend', 'backend', 'database', 'auth', 'deployment']
 
@@ -14,8 +15,9 @@ const containerVariants = {
   },
 }
 
-export default function StackGrid({ recommendations, onGenerate }) {
+export default function StackGrid({ recommendations, projectName, description }) {
   const [overrides, setOverrides] = useState({})
+  const { loading: generating, generate } = useGenerate()
 
   if (!recommendations) return null
 
@@ -23,6 +25,15 @@ export default function StackGrid({ recommendations, onGenerate }) {
 
   const handleOverride = (category, value) => {
     setOverrides(prev => ({ ...prev, [category]: value }))
+  }
+
+  const handleGenerate = () => {
+    const stack = {}
+    for (const cat of MAIN_CATEGORIES) {
+      stack[cat] = overrides[cat] ?? recommendations[cat]?.choice ?? ''
+    }
+    stack.additional = additional
+    generate({ stack, projectName: projectName || 'my-app', description })
   }
 
   return (
@@ -100,22 +111,43 @@ export default function StackGrid({ recommendations, onGenerate }) {
         className="flex flex-col items-stretch gap-3"
       >
         <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={onGenerate}
+          whileHover={!generating ? { scale: 1.01 } : undefined}
+          whileTap={!generating ? { scale: 0.985 } : undefined}
+          onClick={handleGenerate}
+          disabled={generating}
           className="w-full py-4 rounded-md text-base font-semibold"
           style={{
             background: '#f97316',
             color: '#080808',
-            boxShadow: '0 0 40px rgba(249,115,22,0.22)',
+            opacity: generating ? 0.55 : 1,
+            cursor: generating ? 'not-allowed' : 'pointer',
+            boxShadow: generating ? 'none' : '0 0 40px rgba(249,115,22,0.22)',
           }}
         >
-          Generate Project →
+          {generating ? (
+            <span className="flex items-center justify-center gap-2.5">
+              <GeneratingSpinner />
+              Generating...
+            </span>
+          ) : (
+            'Generate Project →'
+          )}
         </motion.button>
         <p className="text-center text-xs text-faint">
           Downloads a configured, ready-to-run project ZIP
         </p>
       </motion.div>
     </motion.div>
+  )
+}
+
+function GeneratingSpinner() {
+  return (
+    <motion.span
+      animate={{ rotate: 360 }}
+      transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+      className="inline-block w-4 h-4 border-2 rounded-full"
+      style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#080808' }}
+    />
   )
 }

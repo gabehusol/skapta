@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DescriptionInput from "../components/DescriptionInput";
 import StackGrid from "../components/StackGrid";
@@ -6,8 +7,10 @@ import { useRecommend } from "../hooks/useRecommend";
 
 export default function Home() {
   const { loading, recommendations, analyze } = useRecommend();
+  const [lastInput, setLastInput] = useState({ projectName: "my-app", description: "" });
 
-  const handleAnalyze = ({ description }) => {
+  const handleAnalyze = ({ description, projectName }) => {
+    setLastInput({ description, projectName });
     analyze(description);
   };
 
@@ -144,9 +147,8 @@ export default function Home() {
             >
               <StackGrid
                 recommendations={recommendations}
-                onGenerate={() => {
-                  /* Phase 2: wire up generate flow */
-                }}
+                projectName={lastInput.projectName}
+                description={lastInput.description}
               />
             </motion.div>
           )}
