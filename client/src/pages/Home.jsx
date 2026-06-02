@@ -6,7 +6,7 @@ import HeroBackground from "../components/HeroBackground";
 import { useRecommend } from "../hooks/useRecommend";
 
 export default function Home() {
-  const { loading, recommendations, analyze } = useRecommend();
+  const { loading, error, recommendations, analyze, retry, reset } = useRecommend();
   const [lastInput, setLastInput] = useState({ projectName: "my-app", description: "" });
 
   const handleAnalyze = ({ description, projectName }) => {
@@ -103,7 +103,39 @@ export default function Home() {
       {/* ── Main content ──────────────────────────────────────────────────── */}
       <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-10 pb-8 flex flex-col gap-10">
 
-        <DescriptionInput onAnalyze={handleAnalyze} loading={loading} />
+        <DescriptionInput onAnalyze={handleAnalyze} onReset={reset} loading={loading} />
+
+        {/* Error + retry */}
+        <AnimatePresence>
+          {error && !loading && !recommendations && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-between px-4 py-3 rounded-lg"
+              style={{ background: "#111111", border: "1px solid #2a2a2a" }}
+            >
+              <span className="text-sm" style={{ color: "#666666" }}>
+                Something went wrong.
+              </span>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={retry}
+                className="text-xs font-semibold px-3 py-1.5 rounded-md"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(249,115,22,0.35)",
+                  color: "#f97316",
+                  cursor: "pointer",
+                }}
+              >
+                Try again
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Loading pulse */}
         <AnimatePresence>

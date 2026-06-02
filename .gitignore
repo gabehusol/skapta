@@ -2,8 +2,6 @@
 __pycache__/
 *.pyc
 *.pyo
-venv/
-.env
 *.egg-info/
 
 # Node
@@ -23,10 +21,8 @@ api/venv/
 ml/venv/
 
 # Environment files
-.env
 api/.env
 ml/.env
-client/.env
 
 # Architechture
 DESIGN.md

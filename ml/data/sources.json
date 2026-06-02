@@ -1,0 +1,121 @@
+{
+  "React": [
+    "https://react.dev/learn",
+    "https://react.dev/learn/thinking-in-react",
+    "https://react.dev/learn/describing-the-ui",
+    "https://react.dev/learn/adding-interactivity",
+    "https://react.dev/learn/managing-state"
+  ],
+  "Next.js": [
+    "https://nextjs.org/docs",
+    "https://raw.githubusercontent.com/vercel/next.js/canary/docs/01-app/01-getting-started/01-installation.mdx",
+    "https://raw.githubusercontent.com/vercel/next.js/canary/docs/01-app/01-getting-started/05-server-and-client-components.mdx",
+    "https://raw.githubusercontent.com/vercel/next.js/canary/docs/01-app/01-getting-started/15-route-handlers.mdx",
+    "https://raw.githubusercontent.com/vercel/next.js/canary/docs/01-app/01-getting-started/17-deploying.mdx"
+  ],
+  "Vue": [
+    "https://vuejs.org/guide/introduction",
+    "https://vuejs.org/guide/essentials/reactivity-fundamentals",
+    "https://vuejs.org/guide/essentials/computed",
+    "https://vuejs.org/guide/components/registration",
+    "https://vuejs.org/guide/scaling-up/state-management"
+  ],
+  "Express": [
+    "https://expressjs.com/en/starter/installing.html",
+    "https://expressjs.com/en/guide/routing.html",
+    "https://expressjs.com/en/guide/using-middleware.html",
+    "https://expressjs.com/en/guide/error-handling.html",
+    "https://expressjs.com/en/4x/api.html"
+  ],
+  "FastAPI": [
+    "https://fastapi.tiangolo.com/tutorial/",
+    "https://fastapi.tiangolo.com/tutorial/first-steps/",
+    "https://fastapi.tiangolo.com/tutorial/body/",
+    "https://fastapi.tiangolo.com/tutorial/query-params/",
+    "https://fastapi.tiangolo.com/tutorial/response-model/"
+  ],
+  "Django": [
+    "https://docs.djangoproject.com/en/5.0/intro/",
+    "https://docs.djangoproject.com/en/5.0/topics/db/models/",
+    "https://docs.djangoproject.com/en/5.0/topics/auth/",
+    "https://docs.djangoproject.com/en/5.0/topics/http/views/",
+    "https://raw.githubusercontent.com/django/django/main/docs/topics/db/models.rst"
+  ],
+  "PostgreSQL": [
+    "https://www.postgresql.org/docs/current/tutorial.html",
+    "https://www.postgresql.org/docs/current/sql-createtable.html",
+    "https://www.postgresql.org/docs/current/datatype.html",
+    "https://www.postgresql.org/docs/current/queries.html",
+    "https://www.postgresql.org/docs/current/indexes.html"
+  ],
+  "MongoDB": [
+    "https://www.mongodb.com/docs/manual/introduction/",
+    "https://www.mongodb.com/docs/manual/core/document/",
+    "https://www.mongodb.com/docs/manual/crud/",
+    "https://www.mongodb.com/docs/manual/indexes/",
+    "https://www.mongodb.com/docs/manual/aggregation/"
+  ],
+  "Supabase": [
+    "https://supabase.com/docs",
+    "https://supabase.com/docs/guides/getting-started/quickstarts/reactjs",
+    "https://supabase.com/docs/guides/database/tables",
+    "https://supabase.com/docs/guides/auth",
+    "https://supabase.com/docs/guides/storage"
+  ],
+  "Auth0": [
+    "https://raw.githubusercontent.com/auth0/docs/master/articles/getting-started/overview.md",
+    "https://raw.githubusercontent.com/auth0/docs/master/articles/getting-started/the-basics.md",
+    "https://raw.githubusercontent.com/auth0/docs/master/articles/getting-started/the-authentication-flow.md",
+    "https://raw.githubusercontent.com/auth0/docs/master/articles/quickstart/webapp/nextjs/01-login.md",
+    "https://raw.githubusercontent.com/auth0/docs/master/articles/quickstart/webapp/nextjs/interactive.md"
+  ],
+  "NextAuth": [
+    "https://next-auth.js.org/getting-started/introduction",
+    "https://next-auth.js.org/getting-started/example",
+    "https://next-auth.js.org/configuration/options",
+    "https://next-auth.js.org/providers/credentials",
+    "https://authjs.dev/getting-started"
+  ],
+  "Firebase": [
+    "https://firebase.google.com/docs/auth",
+    "https://firebase.google.com/docs/auth/web/start",
+    "https://firebase.google.com/docs/auth/web/google-signin",
+    "https://firebase.google.com/docs/auth/web/manage-users",
+    "https://firebase.google.com/docs/auth/web/anonymous-auth"
+  ],
+  "Vercel": [
+    "https://vercel.com/docs",
+    "https://vercel.com/docs/deployments/overview",
+    "https://vercel.com/docs/frameworks/nextjs",
+    "https://vercel.com/docs/environment-variables",
+    "https://vercel.com/docs/git"
+  ],
+  "Railway": [
+    "https://docs.railway.app",
+    "https://docs.railway.app/getting-started",
+    "https://docs.railway.app/deploy/deployments",
+    "https://docs.railway.app/databases/postgresql",
+    "https://docs.railway.app/reference/variables"
+  ],
+  "Docker": [
+    "https://docs.docker.com/get-started/",
+    "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+    "https://docs.docker.com/compose/",
+    "https://raw.githubusercontent.com/docker/docs/main/content/get-started/docker-overview.md",
+    "https://raw.githubusercontent.com/docker/docs/main/content/manuals/compose/gettingstarted.md"
+  ],
+  "Socket.io": [
+    "https://socket.io/docs/v4/",
+    "https://socket.io/docs/v4/server-api/",
+    "https://socket.io/docs/v4/client-api/",
+    "https://socket.io/docs/v4/rooms/",
+    "https://socket.io/docs/v4/emit-cheatsheet/"
+  ],
+  "Stripe": [
+    "https://stripe.com/docs/development/quickstart",
+    "https://stripe.com/docs/payments/quickstart",
+    "https://stripe.com/docs/webhooks",
+    "https://stripe.com/docs/testing",
+    "https://raw.githubusercontent.com/stripe/stripe-node/master/README.md"
+  ]
+}

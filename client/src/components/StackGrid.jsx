@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import RecommendationCard, { cardVariants } from './RecommendationCard'
+import RecommendationCard from './RecommendationCard'
+import { cardVariants } from '../lib/variants'
 import { useGenerate } from '../hooks/useGenerate'
 
 const MAIN_CATEGORIES = ['frontend', 'backend', 'database', 'auth', 'deployment']
@@ -135,7 +136,6 @@ export default function StackGrid({ recommendations, projectName, description })
         </motion.button>
         <p className="text-center text-xs text-faint">
           Downloads a configured, ready-to-run project ZIP
-        </p>
       </motion.div>
     </motion.div>
   )
