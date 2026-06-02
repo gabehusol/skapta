@@ -22,6 +22,12 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
 
+// JSON error handler — must be last
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const status = err.status ?? err.statusCode ?? 500
+  res.status(status).json({ error: err.message ?? 'Internal server error' })
+})
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
