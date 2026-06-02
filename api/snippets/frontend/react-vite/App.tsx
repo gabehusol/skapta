@@ -1,24 +1,13 @@
 import type { ReactNode } from 'react'
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0()
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <span>Loading...</span>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    loginWithRedirect()
-    return null
-  }
-
-  return <>{children}</>
+function LoadingSpinner() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <span>Loading...</span>
+    </div>
+  )
 }
 
 function Dashboard() {
@@ -27,6 +16,7 @@ function Dashboard() {
   return (
     <div>
       <h1>Welcome, {user?.name}</h1>
+      <p>{user?.email}</p>
       <button
         onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
       >
@@ -36,19 +26,18 @@ function Dashboard() {
   )
 }
 
+// withAuthenticationRequired handles the redirect timing correctly —
+// it waits for Auth0 to finish loading before deciding to redirect.
+const ProtectedDashboard = withAuthenticationRequired(Dashboard, {
+  onRedirecting: () => <LoadingSpinner />,
+})
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard" element={<ProtectedDashboard />} />
       </Routes>
     </BrowserRouter>
   )
