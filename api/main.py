@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routes import health, recommend
+from routes import health, recommend, generate
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,3 +20,4 @@ app.add_middleware(
 
 app.include_router(health.router, prefix="/api")
 app.include_router(recommend.router, prefix="/api")
+app.include_router(generate.router, prefix="/api")
