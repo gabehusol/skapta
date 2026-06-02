@@ -136,6 +136,7 @@ export default function StackGrid({ recommendations, projectName, description })
         </motion.button>
         <p className="text-center text-xs text-faint">
           Downloads a configured, ready-to-run project ZIP
+        </p>
       </motion.div>
     </motion.div>
   )
