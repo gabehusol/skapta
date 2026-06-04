@@ -1,0 +1,4 @@
+# MongoDB — required
+MONGODB_URI=mongodb://localhost:27017/myapp
+# Example local:  mongodb://localhost:27017/myapp
+# Example Atlas:  mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/myapp?retryWrites=true&w=majority
