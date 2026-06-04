@@ -1,0 +1,25 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/${MONGO_DB:-myapp}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7-jammy
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo_data:
