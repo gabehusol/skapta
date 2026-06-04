@@ -111,7 +111,7 @@ def recommend(description: str) -> dict:
     except json.JSONDecodeError as e:
         raise ValueError(f"LLM returned invalid JSON: {e}\nRaw response: {response.content}")
 
-    # Build retrieved_sources from actual reranked chunks — not LLM-generated
+    # Build retrieved_sources from actual reranked chunks (not LLM-generated)
     seen = set()
     retrieved_sources = []
     for chunk in reranked:
