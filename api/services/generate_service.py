@@ -32,6 +32,14 @@ def _normalize(s: str) -> str:
     return s.lower().strip()
 
 
+def _no_backend(backend: str) -> bool:
+    """True when the stack has no separate backend service (e.g. Next.js API routes)."""
+    b = backend.strip()
+    if b in ("", "none", "n/a", "-", "—"):
+        return True
+    return "api route" in b or "built-in" in b or "built in" in b
+
+
 def validate_stack(stack: StackSelection) -> list[str]:
     """Returns a list of error messages. Empty list = valid."""
     errors: list[str] = []
@@ -68,10 +76,14 @@ def validate_stack(stack: StackSelection) -> list[str]:
     fe_key = next((k for k in _FRONTEND_BACKEND if k in frontend), None)
     if fe_key:
         allowed_backends = _FRONTEND_BACKEND[fe_key]
-        backend_matched = backend is None or any(
-            (b is None and not backend) or (b and b in backend)
-            for b in allowed_backends
-        )
+        if _no_backend(backend):
+            # A frontend with no separate backend is valid iff None is allowed
+            # (e.g. Next.js, which has built-in API routes).
+            backend_matched = None in allowed_backends
+        else:
+            backend_matched = any(
+                b is not None and b in backend for b in allowed_backends
+            )
         if not backend_matched:
             errors.append(
                 f"{stack.frontend} is not compatible with {stack.backend}."
