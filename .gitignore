@@ -26,3 +26,6 @@ ml/.env
 
 # Architechture
 DESIGN.md
+
+# Dev-only regression snapshots (scripts/snapshot_combos.py output)
+.snapshots/

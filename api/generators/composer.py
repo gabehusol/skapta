@@ -1,5 +1,6 @@
 from pathlib import Path
 from models.generate import StackSelection, GenerationOptions
+from generators.fragments import merge_package_json, merge_requirements
 
 SNIPPETS_DIR = Path(__file__).parent.parent / "snippets"
 
@@ -11,6 +12,26 @@ def _read(path: Path) -> str:
 def _load(rel_path: str, project_name: str) -> str:
     content = _read(SNIPPETS_DIR / rel_path)
     return content.replace("{{PROJECT_NAME}}", project_name)
+
+
+def _db_key(db: str) -> str:
+    """Snippet directory name for a database selection."""
+    d = db.lower()
+    if "mongo" in d:
+        return "mongodb"
+    if "mysql" in d:
+        return "mysql"
+    if "supabase" in d:
+        return "supabase"
+    return "postgresql"
+
+
+def _db_fragments(db: str, project_name: str, filename: str) -> list[str]:
+    """Manifest fragments a database contributes (e.g. package.deps.json,
+    requirements.frag.txt). Empty list when the DB has no fragment of that kind."""
+    rel = f"database/{_db_key(db)}/{filename}"
+    path = SNIPPETS_DIR / rel
+    return [_load(rel, project_name)] if path.exists() else []
 
 
 # Files that belong at the react-vite client root (not client/src/)
@@ -83,11 +104,30 @@ def _backend_snippets(stack: StackSelection, project_name: str) -> dict[str, str
     if not src_dir.exists():
         return files
 
+    # Manifest files (package.json, requirements.txt) are composed by merging the
+    # backend's base with per-database fragments — emitted separately below.
+    _MANIFEST_TEMPLATES = {"package.json.template", "requirements.txt.template"}
+
     for f in src_dir.rglob("*"):
-        if f.is_file():
+        if f.is_file() and f.name not in _MANIFEST_TEMPLATES:
             rel = f.relative_to(SNIPPETS_DIR / base)
             rel_posix = rel.as_posix().replace(".template", "")
             files[f"server/{rel_posix}"] = _load(f"{base}/{rel.as_posix()}", project_name)
+
+    db = stack.database
+    pkg_base = src_dir / "package.json.template"
+    if pkg_base.exists():
+        files["server/package.json"] = merge_package_json(
+            _load(f"{base}/package.json.template", project_name),
+            *_db_fragments(db, project_name, "package.deps.json"),
+        )
+
+    req_base = src_dir / "requirements.txt.template"
+    if req_base.exists():
+        files["server/requirements.txt"] = merge_requirements(
+            _load(f"{base}/requirements.txt.template", project_name),
+            *_db_fragments(db, project_name, "requirements.frag.txt"),
+        )
 
     return files
 
@@ -181,7 +221,9 @@ def _database_snippets(stack: StackSelection, project_name: str) -> dict[str, st
         src_dir = SNIPPETS_DIR / db_dir
         if not src_dir.exists():
             return files
-        # These three overwrite the Prisma-based equivalents emitted by the express snippet
+        # These overwrite the Prisma-based equivalents emitted by the express snippet.
+        # (The Mongoose deps are merged into server/package.json as a fragment — see
+        #  _backend_snippets — rather than overriding the whole manifest.)
         conn = src_dir / "mongoose-express.ts"
         if conn.exists():
             files["server/src/db/connection.ts"] = _load(
@@ -191,11 +233,6 @@ def _database_snippets(stack: StackSelection, project_name: str) -> dict[str, st
         if ex.exists():
             files["server/src/routes/example.ts"] = _load(
                 f"{db_dir}/example-express.ts", project_name
-            )
-        pkg = src_dir / "package.json.template"
-        if pkg.exists():
-            files["server/package.json"] = _load(
-                f"{db_dir}/package.json.template", project_name
             )
         return files
 
