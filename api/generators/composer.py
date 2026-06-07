@@ -26,12 +26,27 @@ def _db_key(db: str) -> str:
     return "postgresql"
 
 
-def _db_fragments(db: str, project_name: str, filename: str) -> list[str]:
-    """Manifest fragments a database contributes (e.g. package.deps.json,
-    requirements.frag.txt). Empty list when the DB has no fragment of that kind."""
-    rel = f"database/{_db_key(db)}/{filename}"
-    path = SNIPPETS_DIR / rel
-    return [_load(rel, project_name)] if path.exists() else []
+def _auth_key(auth: str) -> str:
+    """Snippet directory name for an auth selection."""
+    a = auth.lower()
+    if "supabase" in a:
+        return "supabase-auth"
+    if "nextauth" in a:
+        return "nextauth"
+    if "firebase" in a:
+        return "firebase-auth"
+    return "auth0"
+
+
+def _manifest_fragments(stack: StackSelection, project_name: str, filename: str) -> list[str]:
+    """All snippet fragments contributing to a merged server manifest file
+    (e.g. package.deps.json, requirements.frag.txt). Each layer adds only its own
+    dependencies; the composer merges them. Layers with no fragment are skipped."""
+    rels = [
+        f"database/{_db_key(stack.database)}/{filename}",
+        f"auth/{_auth_key(stack.auth)}/{filename}",
+    ]
+    return [_load(rel, project_name) for rel in rels if (SNIPPETS_DIR / rel).exists()]
 
 
 # Files that belong at the react-vite client root (not client/src/)
@@ -114,19 +129,18 @@ def _backend_snippets(stack: StackSelection, project_name: str) -> dict[str, str
             rel_posix = rel.as_posix().replace(".template", "")
             files[f"server/{rel_posix}"] = _load(f"{base}/{rel.as_posix()}", project_name)
 
-    db = stack.database
     pkg_base = src_dir / "package.json.template"
     if pkg_base.exists():
         files["server/package.json"] = merge_package_json(
             _load(f"{base}/package.json.template", project_name),
-            *_db_fragments(db, project_name, "package.deps.json"),
+            *_manifest_fragments(stack, project_name, "package.deps.json"),
         )
 
     req_base = src_dir / "requirements.txt.template"
     if req_base.exists():
         files["server/requirements.txt"] = merge_requirements(
             _load(f"{base}/requirements.txt.template", project_name),
-            *_db_fragments(db, project_name, "requirements.frag.txt"),
+            *_manifest_fragments(stack, project_name, "requirements.frag.txt"),
         )
 
     return files
@@ -166,14 +180,17 @@ def _auth_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
     if not src_dir.exists():
         return files
 
-    # Backend middleware only when a server exists and the variant file is present
-    # (Auth0 middleware for Express and FastAPI is baked into the backend snippet itself
-    #  these slots are the planned home once auth is fully decoupled from the backend)
+    # Backend auth contract: the auth layer supplies the middleware/dependency that
+    # exports `requireAuth` (Express) / `require_auth` (FastAPI/Django) at a fixed path,
+    # so the route glue imports the contract — not the concrete auth tech. Adding a new
+    # auth provider means dropping a conforming variant file in auth/<provider>/.
+    #   Express  → server/src/middleware/auth.ts   (import '../middleware/auth')
+    #   FastAPI  → server/auth/provider.py         (from auth.provider import require_auth)
     if backend and backend != "none":
         if "fastapi" in backend:
-            variant, dest_path = "fastapi.py", "server/src/middleware/auth.py"
+            variant, dest_path = "fastapi.py", "server/auth/provider.py"
         elif "django" in backend:
-            variant, dest_path = "django.py", "server/middleware/auth.py"
+            variant, dest_path = "django.py", "server/auth/provider.py"
         else:
             variant, dest_path = "express.ts", "server/src/middleware/auth.ts"
 

@@ -140,7 +140,7 @@ def test_python_server(server_dir: str) -> None:
     ok("requirements.txt present") if os.path.isfile(req) else fail("requirements.txt present")
     check("python syntax check", [
         "python", "-m", "py_compile",
-        "main.py", "routes/example.py", "auth/auth0.py", "db/connection.py",
+        "main.py", "routes/example.py", "auth/provider.py", "db/connection.py",
     ], server_dir)
     no_prisma = not os.path.isdir(os.path.join(server_dir, "prisma"))
     ok("no prisma/ in server") if no_prisma else fail("no prisma/ in server")
