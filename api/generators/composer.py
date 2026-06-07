@@ -1,377 +1,238 @@
+"""Generic composition engine (engine v2, pillar 3).
+
+Reads the declarative registry in `manifest.py` and assembles the file map for a
+stack. There are no `if "fastapi" in backend` ladders here — technology selection
+is data (the registry); this module only knows the *structural* operations
+(directory walk, the two frontend layouts, manifest merging).
+"""
 from pathlib import Path
+
 from models.generate import StackSelection, GenerationOptions
+from generators import manifest as M
 from generators.fragments import merge_package_json, merge_requirements
 
 SNIPPETS_DIR = Path(__file__).parent.parent / "snippets"
 
 
-def _read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
 def _load(rel_path: str, project_name: str) -> str:
-    content = _read(SNIPPETS_DIR / rel_path)
+    content = (SNIPPETS_DIR / rel_path).read_text(encoding="utf-8")
     return content.replace("{{PROJECT_NAME}}", project_name)
 
 
-def _db_key(db: str) -> str:
-    """Snippet directory name for a database selection."""
-    d = db.lower()
-    if "mongo" in d:
-        return "mongodb"
-    if "mysql" in d:
-        return "mysql"
-    if "supabase" in d:
-        return "supabase"
-    return "postgresql"
+def _exists(rel_path: str) -> bool:
+    return (SNIPPETS_DIR / rel_path).exists()
 
 
-def _auth_key(auth: str) -> str:
-    """Snippet directory name for an auth selection."""
-    a = auth.lower()
-    if "supabase" in a:
-        return "supabase-auth"
-    if "nextauth" in a:
-        return "nextauth"
-    if "firebase" in a:
-        return "firebase-auth"
-    return "auth0"
+# ---------------------------------------------------------------------------
+# Registry resolution
+# ---------------------------------------------------------------------------
+def _match(selection: str, table, fallback=None):
+    """First registry entry whose `match` substring is in the selection, else fallback."""
+    s = (selection or "").lower()
+    for spec in table:
+        if spec.match in s:
+            return spec
+    return fallback
 
 
-def _manifest_fragments(stack: StackSelection, project_name: str, filename: str) -> list[str]:
-    """All snippet fragments contributing to a merged server manifest file
-    (e.g. package.deps.json, requirements.frag.txt). Each layer adds only its own
-    dependencies; the composer merges them. Layers with no fragment are skipped."""
-    rels = [
-        f"database/{_db_key(stack.database)}/{filename}",
-        f"auth/{_auth_key(stack.auth)}/{filename}",
-    ]
-    return [_load(rel, project_name) for rel in rels if (SNIPPETS_DIR / rel).exists()]
+def _has_backend(backend: str) -> bool:
+    b = (backend or "").strip().lower()
+    return bool(b) and b != "none"
 
 
-# Files that belong at the react-vite client root (not client/src/)
-_REACT_VITE_ROOT_FILES = {
-    "vite.config.ts",
-    "tsconfig.json",
-    "package.json",
-    "index.html",
-    ".eslintrc.cjs",
-    "prettier.config.cjs",
-}
+def _ctx(stack: StackSelection) -> M.Ctx:
+    backend = stack.backend.lower()
+    is_python = "fastapi" in backend or "django" in backend
+    has_backend = _has_backend(stack.backend)
+    return M.Ctx(
+        is_python=is_python,
+        is_mongo="mongo" in stack.database.lower(),
+        is_next="next" in stack.frontend.lower(),
+        has_backend=has_backend,
+        node_backend=has_backend and not is_python,
+    )
 
 
+def _select(ctx: M.Ctx, rules) -> str | None:
+    """First (predicate, value) rule whose predicate holds. `None` predicate = always."""
+    for pred, value in rules:
+        if pred is None or getattr(ctx, pred):
+            return value
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Frontend
+# ---------------------------------------------------------------------------
 def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    frontend = stack.frontend.lower()
+    spec = _match(stack.frontend, M.FRONTENDS, M.FRONTEND_FALLBACK)
     files: dict[str, str] = {}
+    if not _exists(spec.dir):
+        return files
 
-    if "next" in frontend:
-        # Next.js: preserve the full directory tree under client/ with no src/ remapping.
-        base = "frontend/nextjs"
-        src_dir = SNIPPETS_DIR / base
-        if not src_dir.exists():
-            return files
-        for f in src_dir.rglob("*"):
+    if spec.layout == M.LAYOUT_TREE:
+        # Preserve the full directory tree under client/ (e.g. Next.js app dir).
+        for f in (SNIPPETS_DIR / spec.dir).rglob("*"):
             if f.is_file():
-                rel = f.relative_to(src_dir)
-                # Normalise Windows backslashes and strip .template suffix
-                rel_posix = rel.as_posix().replace(".template", "")
-                files[f"client/{rel_posix}"] = _load(f"{base}/{rel.as_posix()}", project_name)
+                rel = f.relative_to(SNIPPETS_DIR / spec.dir).as_posix()
+                files[f"client/{rel.replace('.template', '')}"] = _load(f"{spec.dir}/{rel}", project_name)
         return files
 
-    if "vue" in frontend:
-        base = "frontend/vue-vite"
-    else:
-        base = "frontend/react-vite"
-
-    src_dir = SNIPPETS_DIR / base
-    if not src_dir.exists():
-        return files
-
-    # react-vite / vue-vite: flat dir; config files at client/, source files at client/src/
-    for f in src_dir.iterdir():
+    # SPLIT: flat dir — config files at client/, application source at client/src/.
+    for f in (SNIPPETS_DIR / spec.dir).iterdir():
         if f.is_file():
-            dest_name = f.name.replace(".template", "")
-            if dest_name in _REACT_VITE_ROOT_FILES:
-                target = f"client/{dest_name}"
-            else:
-                target = f"client/src/{dest_name}"
-            files[target] = _load(f"{base}/{f.name}", project_name)
-
+            name = f.name.replace(".template", "")
+            target = f"client/{name}" if name in M.SPLIT_ROOT_FILES else f"client/src/{name}"
+            files[target] = _load(f"{spec.dir}/{f.name}", project_name)
     return files
+
+
+# ---------------------------------------------------------------------------
+# Backend (+ merged server manifest)
+# ---------------------------------------------------------------------------
+def _manifest_fragments(stack: StackSelection, project_name: str, filename: str) -> list[str]:
+    """Fragments contributing to a merged server manifest (package.json /
+    requirements.txt): the database's and the auth provider's, if present."""
+    dirs: list[str] = [_match(stack.database, M.DATABASES, M.DATABASE_FALLBACK).dir]
+    auth = _match(stack.auth, M.AUTHS)
+    if auth is not None:
+        dirs.append(auth.dir)
+    return [_load(f"{d}/{filename}", project_name) for d in dirs if _exists(f"{d}/{filename}")]
 
 
 def _backend_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    backend = stack.backend.lower()
-
-    # Next.js-only stacks have no separate backend process.
-    if not backend or backend == "none":
-        return {}
-
-    if "fastapi" in backend:
-        base = "backend/fastapi"
-    elif "django" in backend:
-        base = "backend/django"
-    else:
-        base = "backend/express"
-
+    if not _has_backend(stack.backend):
+        return {}  # e.g. Next.js with built-in API routes
+    spec = _match(stack.backend, M.BACKENDS, M.BACKEND_FALLBACK)
     files: dict[str, str] = {}
-    src_dir = SNIPPETS_DIR / base
-    if not src_dir.exists():
+    if not _exists(spec.dir):
         return files
 
-    # Manifest files (package.json, requirements.txt) are composed by merging the
-    # backend's base with per-database fragments — emitted separately below.
-    _MANIFEST_TEMPLATES = {"package.json.template", "requirements.txt.template"}
+    for f in (SNIPPETS_DIR / spec.dir).rglob("*"):
+        if f.is_file() and f.name not in M.MANIFEST_TEMPLATES:
+            rel = f.relative_to(SNIPPETS_DIR / spec.dir).as_posix()
+            files[f"server/{rel.replace('.template', '')}"] = _load(f"{spec.dir}/{rel}", project_name)
 
-    for f in src_dir.rglob("*"):
-        if f.is_file() and f.name not in _MANIFEST_TEMPLATES:
-            rel = f.relative_to(SNIPPETS_DIR / base)
-            rel_posix = rel.as_posix().replace(".template", "")
-            files[f"server/{rel_posix}"] = _load(f"{base}/{rel.as_posix()}", project_name)
-
-    pkg_base = src_dir / "package.json.template"
-    if pkg_base.exists():
+    # Server manifest is composed: backend base merged with db + auth fragments.
+    if _exists(f"{spec.dir}/package.json.template"):
         files["server/package.json"] = merge_package_json(
-            _load(f"{base}/package.json.template", project_name),
+            _load(f"{spec.dir}/package.json.template", project_name),
             *_manifest_fragments(stack, project_name, "package.deps.json"),
         )
-
-    req_base = src_dir / "requirements.txt.template"
-    if req_base.exists():
+    if _exists(f"{spec.dir}/requirements.txt.template"):
         files["server/requirements.txt"] = merge_requirements(
-            _load(f"{base}/requirements.txt.template", project_name),
+            _load(f"{spec.dir}/requirements.txt.template", project_name),
             *_manifest_fragments(stack, project_name, "requirements.frag.txt"),
         )
-
     return files
+
+
+# ---------------------------------------------------------------------------
+# Auth (layer contract)
+# ---------------------------------------------------------------------------
+def _emit(files: dict[str, str], snippet_dir: str, variant: str, dest: str, project_name: str) -> None:
+    if _exists(f"{snippet_dir}/{variant}"):
+        files[dest] = _load(f"{snippet_dir}/{variant}", project_name)
 
 
 def _auth_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    auth = stack.auth.lower()
-    backend = stack.backend.lower()
+    spec = _match(stack.auth, M.AUTHS)
+    files: dict[str, str] = {}
+    if spec is None or not _exists(spec.dir):
+        return files
+
+    # Backend guard (the requireAuth/require_auth contract), keyed on the backend.
+    if _has_backend(stack.backend):
+        backend = _match(stack.backend, M.BACKENDS, M.BACKEND_FALLBACK)
+        variant_dest = spec.backend_variants.get(backend.match)
+        if variant_dest:
+            _emit(files, spec.dir, *variant_dest, project_name)
+
+    # Frontend provider, keyed on frontend kind.
+    fe = _match(stack.frontend, M.FRONTENDS, M.FRONTEND_FALLBACK)
+    fe_kind = "next" if fe.match == "next" else "spa"
+    variant_dest = spec.frontend_provider.get(fe_kind)
+    if variant_dest:
+        _emit(files, spec.dir, *variant_dest, project_name)
+
+    # Irreducible combo glue (e.g. Supabase Auth's Next.js middleware).
     frontend = stack.frontend.lower()
-
-    files: dict[str, str] = {}
-
-    if "supabase" in auth:
-        auth_dir = "auth/supabase-auth"
-        src_dir = SNIPPETS_DIR / auth_dir
-        if not src_dir.exists():
-            return files
-        if "next" in frontend:
-            # updateSession helper — imported by the root middleware.ts
-            mw = src_dir / "nextjs.ts"
-            if mw.exists():
-                files["client/lib/supabase/middleware.ts"] = _load(
-                    f"{auth_dir}/nextjs.ts", project_name
-                )
-        return files
-
-    if "auth0" in auth:
-        auth_dir = "auth/auth0"
-    elif "nextauth" in auth:
-        auth_dir = "auth/nextauth"
-    elif "firebase" in auth:
-        auth_dir = "auth/firebase-auth"
-    else:
-        return files
-
-    src_dir = SNIPPETS_DIR / auth_dir
-    if not src_dir.exists():
-        return files
-
-    # Backend auth contract: the auth layer supplies the middleware/dependency that
-    # exports `requireAuth` (Express) / `require_auth` (FastAPI/Django) at a fixed path,
-    # so the route glue imports the contract — not the concrete auth tech. Adding a new
-    # auth provider means dropping a conforming variant file in auth/<provider>/.
-    #   Express  → server/src/middleware/auth.ts   (import '../middleware/auth')
-    #   FastAPI  → server/auth/provider.py         (from auth.provider import require_auth)
-    if backend and backend != "none":
-        if "fastapi" in backend:
-            variant, dest_path = "fastapi.py", "server/auth/provider.py"
-        elif "django" in backend:
-            variant, dest_path = "django.py", "server/auth/provider.py"
-        else:
-            variant, dest_path = "express.ts", "server/src/middleware/auth.ts"
-
-        bf = src_dir / variant
-        if bf.exists():
-            files[dest_path] = _load(f"{auth_dir}/{variant}", project_name)
-
-    # Frontend provider only if the variant file is present.
-    fe_variant = "nextjs-provider.tsx" if "next" in frontend else "react-provider.tsx"
-    fe_file = src_dir / fe_variant
-    if fe_file.exists():
-        files["client/src/providers/AuthProvider.tsx"] = _load(
-            f"{auth_dir}/{fe_variant}", project_name
-        )
+    for fmatch, variant, dest in spec.glue:
+        if fmatch in frontend:
+            _emit(files, spec.dir, variant, dest, project_name)
 
     return files
 
 
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
 def _database_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    db = stack.database.lower()
-    backend = stack.backend.lower()
-
+    spec = _match(stack.database, M.DATABASES, M.DATABASE_FALLBACK)
     files: dict[str, str] = {}
-
-    if "supabase" in db:
-        # Supabase client helpers live in the Next.js client no server involved
-        db_dir = "database/supabase"
-        src_dir = SNIPPETS_DIR / db_dir
-        if not src_dir.exists():
-            return files
-        cf = src_dir / "client-nextjs.ts"
-        if cf.exists():
-            files["client/lib/supabase/client.ts"] = _load(
-                f"{db_dir}/client-nextjs.ts", project_name
-            )
-        sf = src_dir / "server-nextjs.ts"
-        if sf.exists():
-            files["client/lib/supabase/server.ts"] = _load(
-                f"{db_dir}/server-nextjs.ts", project_name
-            )
+    if not _exists(spec.dir):
         return files
-
-    if "mongodb" in db or "mongo" in db:
-        db_dir = "database/mongodb"
-        src_dir = SNIPPETS_DIR / db_dir
-        if not src_dir.exists():
-            return files
-        # These overwrite the Prisma-based equivalents emitted by the express snippet.
-        # (The Mongoose deps are merged into server/package.json as a fragment — see
-        #  _backend_snippets — rather than overriding the whole manifest.)
-        conn = src_dir / "mongoose-express.ts"
-        if conn.exists():
-            files["server/src/db/connection.ts"] = _load(
-                f"{db_dir}/mongoose-express.ts", project_name
-            )
-        ex = src_dir / "example-express.ts"
-        if ex.exists():
-            files["server/src/routes/example.ts"] = _load(
-                f"{db_dir}/example-express.ts", project_name
-            )
-        return files
-
-    if "postgresql" in db or "postgres" in db:
-        db_dir = "database/postgresql"
-        src_dir = SNIPPETS_DIR / db_dir
-        if not src_dir.exists():
-            return files
-        # FastAPI uses raw SQL via psycopg2 (baked into the backend snippet)  skip Prisma
-        if "fastapi" not in backend and "django" not in backend:
-            schema = src_dir / "schema.prisma"
-            if schema.exists():
-                files["server/prisma/schema.prisma"] = _load(
-                    f"{db_dir}/schema.prisma", project_name
-                )
-            conn = src_dir / "prisma-express.ts"
-            if conn.exists():
-                files["server/src/db/connection.ts"] = _load(
-                    f"{db_dir}/prisma-express.ts", project_name
-                )
-        return files
-
+    ctx = _ctx(stack)
+    for variant, dest, pred in spec.emits:
+        if pred and not getattr(ctx, pred):
+            continue
+        _emit(files, spec.dir, variant, dest, project_name)
     return files
 
 
+# ---------------------------------------------------------------------------
+# Deployment
+# ---------------------------------------------------------------------------
 def _docker_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    backend = stack.backend.lower()
-    db = stack.database.lower()
-    docker_dir = SNIPPETS_DIR / "deployment/docker"
-
     files: dict[str, str] = {}
-    if not docker_dir.exists():
+    if not _exists("deployment/docker"):
         return files
+    ctx = _ctx(stack)
 
-    if "fastapi" in backend or "django" in backend:
-        dockerfile = "Dockerfile.python"
-    elif "mongo" in db or "mongodb" in db:
-        # Stripped-down Node image with no Prisma generate step
-        dockerfile = "Dockerfile.node-mongo"
-    else:
-        dockerfile = "Dockerfile.node"
-
-    df = docker_dir / dockerfile
-    if df.exists():
-        # docker-compose build context is ./server, so Dockerfile lives there
-        files["server/Dockerfile"] = _load(f"deployment/docker/{dockerfile}", project_name)
-
-    if "mongo" in db or "mongodb" in db:
-        compose = "docker-compose.node-mongo.yml"
-    elif "fastapi" in backend or "django" in backend:
-        compose = "docker-compose.python-pg.yml"
-    else:
-        compose = "docker-compose.node-pg.yml"
-
-    cf = docker_dir / compose
-    if cf.exists():
-        files["docker-compose.yml"] = _load(f"deployment/docker/{compose}", project_name)
-
+    dockerfile = _select(ctx, M.DOCKERFILE_RULES)
+    if dockerfile:
+        # docker-compose build context is ./server, so the Dockerfile lives there.
+        _emit(files, "deployment/docker", dockerfile, "server/Dockerfile", project_name)
+    compose = _select(ctx, M.COMPOSE_RULES)
+    if compose:
+        _emit(files, "deployment/docker", compose, "docker-compose.yml", project_name)
     return files
 
 
 def _deployment_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
     deployment = stack.deployment.lower()
     additional = " ".join(stack.additional).lower()
-    backend = stack.backend.lower()
-    db = stack.database.lower()
-
     files: dict[str, str] = {}
 
-    # Docker: included when it's the deployment target, an additional selection, or AWS EC2.
+    # Docker: included when it's the deployment target, AWS EC2, or an additional pick.
     if "docker" in deployment or "aws" in deployment or "docker" in additional:
         files.update(_docker_snippets(stack, project_name))
 
-    if "vercel" in deployment:
-        vf = SNIPPETS_DIR / "deployment/vercel/vercel.json"
-        if vf.exists():
-            files["vercel.json"] = _load("deployment/vercel/vercel.json", project_name)
-
-    elif "railway" in deployment:
-        # Pick the right railway.toml variant for the backend/database combo.
-        if "fastapi" in backend or "django" in backend:
-            toml_name = "railway.python.toml"
-        elif "mongo" in db or "mongodb" in db:
-            toml_name = "railway.node-mongo.toml"
-        else:
-            toml_name = "railway.toml"
-
-        rf = SNIPPETS_DIR / f"deployment/railway/{toml_name}"
-        if rf.exists():
-            files["railway.toml"] = _load(f"deployment/railway/{toml_name}", project_name)
-
-    elif "render" in deployment:
-        rf = SNIPPETS_DIR / "deployment/render/render.yaml"
-        if rf.exists():
-            files["render.yaml"] = _load("deployment/render/render.yaml", project_name)
-
+    if "railway" in deployment:
+        toml_name = _select(_ctx(stack), M.RAILWAY_RULES)
+        _emit(files, "deployment/railway", toml_name, "railway.toml", project_name)
+    else:
+        for key, (src, dest) in M.DEPLOY_FIXED.items():
+            if key in deployment:
+                rel_dir, fname = src.rsplit("/", 1)
+                _emit(files, rel_dir, fname, dest, project_name)
     return files
 
 
+# ---------------------------------------------------------------------------
+# Shared (computed-adjacent: gitignore + vestigial tsconfig base)
+# ---------------------------------------------------------------------------
 def _shared_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
-    frontend = stack.frontend.lower()
-    backend = stack.backend.lower()
-    shared_dir = SNIPPETS_DIR / "shared"
-
+    ctx = _ctx(stack)
     files: dict[str, str] = {}
 
-    if "next" in frontend:
-        gi = shared_dir / "gitignore.next"
-    elif "fastapi" in backend or "django" in backend:
-        gi = shared_dir / "gitignore.python"
-    else:
-        gi = shared_dir / "gitignore.node"
+    gitignore = _select(ctx, M.GITIGNORE_RULES)
+    if gitignore:
+        _emit(files, "shared", gitignore, ".gitignore", project_name)
 
-    if gi.exists():
-        files[".gitignore"] = _load(f"shared/{gi.name}", project_name)
-
-    # tsconfig.base.json is only relevant for monorepos with a Node server.
-    if "next" not in frontend:
-        base = shared_dir / "tsconfig.base.json"
-        if base.exists():
-            files["tsconfig.base.json"] = _load("shared/tsconfig.base.json", project_name)
-
+    # tsconfig.base.json is emitted for human reference on monorepos with a Node server.
+    if not ctx.is_next:
+        _emit(files, "shared", "tsconfig.base.json", "tsconfig.base.json", project_name)
     return files
 
 
