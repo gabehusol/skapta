@@ -171,12 +171,21 @@ RAILWAY_RULES = (
     ("is_mongo", "railway.node-mongo.toml"),
     (None, "railway.toml"),
 )
+RENDER_RULES = (
+    ("is_python", "render.python.yaml"),
+    ("is_mongo", "render.node-mongo.yaml"),
+    (None, "render.node.yaml"),
+)
 
-# Deployment targets that emit a single fixed file. Railway is handled separately
-# because it picks a variant (RAILWAY_RULES).
+# Variant-picking deployment targets: deployment match -> (snippet dir, variant rules, dest).
+DEPLOY_VARIANT = {
+    "railway": ("deployment/railway", RAILWAY_RULES, "railway.toml"),
+    "render": ("deployment/render", RENDER_RULES, "render.yaml"),
+}
+
+# Deployment targets that emit a single fixed file: deployment match -> (src, dest).
 DEPLOY_FIXED = {
     "vercel": ("deployment/vercel/vercel.json", "vercel.json"),
-    "render": ("deployment/render/render.yaml", "render.yaml"),
 }
 
 

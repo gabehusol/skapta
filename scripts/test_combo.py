@@ -118,12 +118,20 @@ def test_nextjs_client(client_dir: str) -> None:
     check("next lint (client)",   ["npm", "run", "lint"],  client_dir, SUPABASE_ENV)
 
 
+def test_vue_client(client_dir: str) -> None:
+    check("npm install (client)",       ["npm", "install", "--prefer-offline", "--silent"], client_dir)
+    check("vue-tsc + vite build (client)", ["npm", "run", "build"], client_dir, AUTH0_ENV)
+    check("eslint (client)",            ["npm", "run", "lint"],  client_dir, AUTH0_ENV)
+
+
 # ── server checks ─────────────────────────────────────────────────────────────
 
 def test_node_prisma_server(server_dir: str) -> None:
     check("npm install (server)", ["npm", "install", "--prefer-offline", "--silent"], server_dir)
-    check("tsc build (server)",   ["npm", "run", "build"], server_dir)
+    # Generate the Prisma client BEFORE tsc — src/db/connection.ts imports @prisma/client,
+    # which has no types until `prisma generate` runs (npm's postinstall is unreliable).
     check("prisma generate",      ["npx", "prisma", "generate"], server_dir)
+    check("tsc build (server)",   ["npm", "run", "build"], server_dir)
 
 
 def test_node_mongo_server(server_dir: str) -> None:
@@ -195,6 +203,10 @@ def test_combo(name: str, payload: dict, combo_type: str) -> None:
             for f in ["lib/supabase/client.ts", "lib/supabase/server.ts", "lib/supabase/middleware.ts"]:
                 path = os.path.join(client_dir, *f.split("/"))
                 ok(f) if os.path.isfile(path) else fail(f)
+
+        elif combo_type == "vue":
+            test_vue_client(client_dir)
+            test_node_prisma_server(server_dir)
 
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -268,6 +280,31 @@ P4 = {
     },
     "project_name": "test-fastapi",
 }
+# --- engine v2 candidate combos (🟡 — snippets exist, not yet hand-tested) ---
+P5 = {
+    "stack": {
+        "frontend": "React + Vite", "backend": "Node.js + Express",
+        "database": "MySQL",        "auth": "Auth0",
+        "deployment": "Railway",    "additional": ["Docker + Docker Compose"],
+    },
+    "project_name": "test-mysql",
+}
+P6 = {
+    "stack": {
+        "frontend": "React + Vite", "backend": "Node.js + Express",
+        "database": "PostgreSQL",   "auth": "Auth0",
+        "deployment": "Render",     "additional": [],
+    },
+    "project_name": "test-render",
+}
+P7 = {
+    "stack": {
+        "frontend": "Vue + Vite",   "backend": "Node.js + Express",
+        "database": "PostgreSQL",   "auth": "Auth0",
+        "deployment": "Railway",    "additional": [],
+    },
+    "project_name": "test-vue",
+}
 
 # ── dispatch ──────────────────────────────────────────────────────────────────
 
@@ -292,6 +329,12 @@ def main() -> None:
         test_combo("Combo 3 — MERN + Auth0",         P3, "node-mongo")
     if combo in ("4", "all"):
         test_combo("Combo 4 — FastAPI + PostgreSQL",  P4, "python")
+    if combo in ("5", "all"):
+        test_combo("Combo 5 — MERN-style MySQL (🟡)", P5, "node-prisma")
+    if combo in ("6", "all"):
+        test_combo("Combo 6 — PERN on Render (🟡)",   P6, "node-prisma")
+    if combo in ("7", "all"):
+        test_combo("Combo 7 — Vue + Vite + Auth0 (🟡)", P7, "vue")
 
     test_validation()
 

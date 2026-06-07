@@ -32,6 +32,16 @@ COMBOS = {
     "4-fastapi": dict(frontend="React + Vite", backend="FastAPI",
                       database="PostgreSQL", auth="Auth0", deployment="Railway",
                       additional=[]),
+    # --- engine v2 candidates (🟡) ---
+    "5-mysql": dict(frontend="React + Vite", backend="Node.js + Express",
+                    database="MySQL", auth="Auth0", deployment="Railway",
+                    additional=["Docker + Docker Compose"]),
+    "6-render": dict(frontend="React + Vite", backend="Node.js + Express",
+                     database="PostgreSQL", auth="Auth0", deployment="Render",
+                     additional=[]),
+    "7-vue": dict(frontend="Vue + Vite", backend="Node.js + Express",
+                  database="PostgreSQL", auth="Auth0", deployment="Railway",
+                  additional=[]),
 }
 
 

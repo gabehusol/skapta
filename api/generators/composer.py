@@ -208,14 +208,17 @@ def _deployment_snippets(stack: StackSelection, project_name: str) -> dict[str, 
     if "docker" in deployment or "aws" in deployment or "docker" in additional:
         files.update(_docker_snippets(stack, project_name))
 
-    if "railway" in deployment:
-        toml_name = _select(_ctx(stack), M.RAILWAY_RULES)
-        _emit(files, "deployment/railway", toml_name, "railway.toml", project_name)
-    else:
-        for key, (src, dest) in M.DEPLOY_FIXED.items():
-            if key in deployment:
-                rel_dir, fname = src.rsplit("/", 1)
-                _emit(files, rel_dir, fname, dest, project_name)
+    ctx = _ctx(stack)
+    for key, (snippet_dir, rules, dest) in M.DEPLOY_VARIANT.items():
+        if key in deployment:
+            variant = _select(ctx, rules)
+            if variant:
+                _emit(files, snippet_dir, variant, dest, project_name)
+            return files
+    for key, (src, dest) in M.DEPLOY_FIXED.items():
+        if key in deployment:
+            rel_dir, fname = src.rsplit("/", 1)
+            _emit(files, rel_dir, fname, dest, project_name)
     return files
 
 

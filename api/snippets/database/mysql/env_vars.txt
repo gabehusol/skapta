@@ -1,0 +1,4 @@
+# MySQL — required
+DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DB_NAME
+# Example local:   mysql://root:password@localhost:3306/myapp
+# Example PlanetScale/Railway: copy the connection string from the dashboard
