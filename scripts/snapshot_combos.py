@@ -42,6 +42,9 @@ COMBOS = {
     "7-vue": dict(frontend="Vue + Vite", backend="Node.js + Express",
                   database="PostgreSQL", auth="Auth0", deployment="Railway",
                   additional=[]),
+    "8-firebase": dict(frontend="React + Vite", backend="Node.js + Express",
+                       database="PostgreSQL", auth="Firebase Auth", deployment="Railway",
+                       additional=[]),
 }
 
 

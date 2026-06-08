@@ -104,11 +104,24 @@ SUPABASE_ENV = {
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "placeholder",
 }
 
+FIREBASE_ENV = {
+    "VITE_FIREBASE_API_KEY":     "placeholder",
+    "VITE_FIREBASE_AUTH_DOMAIN": "placeholder.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID":  "placeholder",
+    "VITE_FIREBASE_APP_ID":      "placeholder",
+}
+
 
 def test_auth0_client(client_dir: str) -> None:
     check("npm install (client)", ["npm", "install", "--prefer-offline", "--silent"], client_dir)
     check("vite build (client)",  ["npm", "run", "build"], client_dir, AUTH0_ENV)
     check("eslint (client)",      ["npm", "run", "lint"],  client_dir, AUTH0_ENV)
+
+
+def test_firebase_client(client_dir: str) -> None:
+    check("npm install (client)", ["npm", "install", "--prefer-offline", "--silent"], client_dir)
+    check("vite build (client)",  ["npm", "run", "build"], client_dir, FIREBASE_ENV)
+    check("eslint (client)",      ["npm", "run", "lint"],  client_dir, FIREBASE_ENV)
 
 
 def test_nextjs_client(client_dir: str) -> None:
@@ -186,6 +199,10 @@ def test_combo(name: str, payload: dict, combo_type: str) -> None:
 
         if combo_type == "node-prisma":
             test_auth0_client(client_dir)
+            test_node_prisma_server(server_dir)
+
+        elif combo_type == "node-prisma-firebase":
+            test_firebase_client(client_dir)
             test_node_prisma_server(server_dir)
 
         elif combo_type == "node-mongo":
@@ -280,6 +297,14 @@ P4 = {
     },
     "project_name": "test-fastapi",
 }
+P8 = {
+    "stack": {
+        "frontend": "React + Vite", "backend": "Node.js + Express",
+        "database": "PostgreSQL",   "auth": "Firebase Auth",
+        "deployment": "Railway",    "additional": [],
+    },
+    "project_name": "test-firebase",
+}
 # --- engine v2 candidate combos (🟡 — snippets exist, not yet hand-tested) ---
 P5 = {
     "stack": {
@@ -335,6 +360,8 @@ def main() -> None:
         test_combo("Combo 6 — PERN on Render (🟡)",   P6, "node-prisma")
     if combo in ("7", "all"):
         test_combo("Combo 7 — Vue + Vite + Auth0 (🟡)", P7, "vue")
+    if combo in ("8", "all"):
+        test_combo("Combo 8 — React + Express + Firebase Auth (🟡)", P8, "node-prisma-firebase")
 
     test_validation()
 
