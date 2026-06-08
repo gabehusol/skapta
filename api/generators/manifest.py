@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class Ctx:
     is_python: bool      # FastAPI/Django backend
+    is_django: bool      # Django backend (a subset of is_python — gets its own tooling)
     is_mongo: bool       # MongoDB database
     is_next: bool        # Next.js frontend
     has_backend: bool    # a separate server process exists
@@ -160,22 +161,29 @@ DATABASE_FALLBACK = DATABASES[-1]  # PostgreSQL
 # ---------------------------------------------------------------------------
 # Deployment — ordered (predicate attr | None, filename) rules. First match wins.
 # ---------------------------------------------------------------------------
+# Django rules are listed before the generic python rules (is_python is also true
+# for Django) so Django gets its own gunicorn/manage.py variants; FastAPI keeps the
+# python variants unchanged.
 DOCKERFILE_RULES = (
+    ("is_django", "Dockerfile.django"),
     ("is_python", "Dockerfile.python"),
     ("is_mongo", "Dockerfile.node-mongo"),
     (None, "Dockerfile.node"),
 )
 COMPOSE_RULES = (
+    ("is_django", "docker-compose.django-pg.yml"),
     ("is_mongo", "docker-compose.node-mongo.yml"),
     ("is_python", "docker-compose.python-pg.yml"),
     (None, "docker-compose.node-pg.yml"),
 )
 RAILWAY_RULES = (
+    ("is_django", "railway.django.toml"),
     ("is_python", "railway.python.toml"),
     ("is_mongo", "railway.node-mongo.toml"),
     (None, "railway.toml"),
 )
 RENDER_RULES = (
+    ("is_django", "render.django.yaml"),
     ("is_python", "render.python.yaml"),
     ("is_mongo", "render.node-mongo.yaml"),
     (None, "render.node.yaml"),

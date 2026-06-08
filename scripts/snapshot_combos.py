@@ -45,6 +45,9 @@ COMBOS = {
     "8-firebase": dict(frontend="React + Vite", backend="Node.js + Express",
                        database="PostgreSQL", auth="Firebase Auth", deployment="Railway",
                        additional=[]),
+    "9-django": dict(frontend="React + Vite", backend="Django",
+                     database="PostgreSQL", auth="Auth0", deployment="Railway",
+                     additional=["Docker + Docker Compose"]),
 }
 
 

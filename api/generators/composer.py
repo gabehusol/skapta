@@ -42,10 +42,12 @@ def _has_backend(backend: str) -> bool:
 
 def _ctx(stack: StackSelection) -> M.Ctx:
     backend = stack.backend.lower()
-    is_python = "fastapi" in backend or "django" in backend
+    is_django = "django" in backend
+    is_python = "fastapi" in backend or is_django
     has_backend = _has_backend(stack.backend)
     return M.Ctx(
         is_python=is_python,
+        is_django=is_django,
         is_mongo="mongo" in stack.database.lower(),
         is_next="next" in stack.frontend.lower(),
         has_backend=has_backend,

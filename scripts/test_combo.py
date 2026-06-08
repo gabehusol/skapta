@@ -167,6 +167,20 @@ def test_python_server(server_dir: str) -> None:
     ok("no prisma/ in server") if no_prisma else fail("no prisma/ in server")
 
 
+def test_django_server(server_dir: str) -> None:
+    # Don't install Django into the Skapta venv — syntax-check the project instead
+    # (py_compile parses without executing imports, so deps aren't required).
+    req = os.path.join(server_dir, "requirements.txt")
+    ok("requirements.txt present") if os.path.isfile(req) else fail("requirements.txt present")
+    check("python syntax check", [
+        "python", "-m", "py_compile",
+        "manage.py", "config/settings.py", "config/urls.py", "config/wsgi.py",
+        "config/asgi.py", "api/views.py", "api/models.py", "api/urls.py", "auth/provider.py",
+    ], server_dir)
+    no_prisma = not os.path.isdir(os.path.join(server_dir, "prisma"))
+    ok("no prisma/ in server") if no_prisma else fail("no prisma/ in server")
+
+
 # ── combo runner ──────────────────────────────────────────────────────────────
 
 def test_combo(name: str, payload: dict, combo_type: str) -> None:
@@ -212,6 +226,10 @@ def test_combo(name: str, payload: dict, combo_type: str) -> None:
         elif combo_type == "python":
             test_auth0_client(client_dir)
             test_python_server(server_dir)
+
+        elif combo_type == "django":
+            test_auth0_client(client_dir)
+            test_django_server(server_dir)
 
         elif combo_type == "nextjs":
             test_nextjs_client(client_dir)
@@ -305,6 +323,14 @@ P8 = {
     },
     "project_name": "test-firebase",
 }
+P9 = {
+    "stack": {
+        "frontend": "React + Vite", "backend": "Django",
+        "database": "PostgreSQL",   "auth": "Auth0",
+        "deployment": "Railway",    "additional": [],
+    },
+    "project_name": "test-django",
+}
 # --- engine v2 candidate combos (🟡 — snippets exist, not yet hand-tested) ---
 P5 = {
     "stack": {
@@ -362,6 +388,8 @@ def main() -> None:
         test_combo("Combo 7 — Vue + Vite + Auth0 (🟡)", P7, "vue")
     if combo in ("8", "all"):
         test_combo("Combo 8 — React + Express + Firebase Auth (🟡)", P8, "node-prisma-firebase")
+    if combo in ("9", "all"):
+        test_combo("Combo 9 — React + Django + Auth0 (🟡)", P9, "django")
 
     test_validation()
 

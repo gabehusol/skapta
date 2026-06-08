@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 3000
+# v1 has no migration files — create tables on boot, then serve with gunicorn.
+CMD ["sh", "-c", "python manage.py migrate --run-syncdb && gunicorn config.wsgi --bind 0.0.0.0:3000"]
