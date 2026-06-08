@@ -111,6 +111,12 @@ FIREBASE_ENV = {
     "VITE_FIREBASE_APP_ID":      "placeholder",
 }
 
+NEXTAUTH_ENV = {
+    "AUTH_SECRET":        "placeholder-secret-at-least-32-characters-long",
+    "AUTH_GITHUB_ID":     "placeholder",
+    "AUTH_GITHUB_SECRET": "placeholder",
+}
+
 
 def test_auth0_client(client_dir: str) -> None:
     check("npm install (client)", ["npm", "install", "--prefer-offline", "--silent"], client_dir)
@@ -129,6 +135,12 @@ def test_nextjs_client(client_dir: str) -> None:
     check("npm install (client)", ["npm", "install", "--legacy-peer-deps"], client_dir)
     check("next build (client)",  ["npm", "run", "build"], client_dir, SUPABASE_ENV)
     check("next lint (client)",   ["npm", "run", "lint"],  client_dir, SUPABASE_ENV)
+
+
+def test_nextjs_nextauth_client(client_dir: str) -> None:
+    check("npm install (client)", ["npm", "install", "--legacy-peer-deps"], client_dir)
+    check("next build (client)",  ["npm", "run", "build"], client_dir, NEXTAUTH_ENV)
+    check("next lint (client)",   ["npm", "run", "lint"],  client_dir, NEXTAUTH_ENV)
 
 
 def test_vue_client(client_dir: str) -> None:
@@ -239,6 +251,14 @@ def test_combo(name: str, payload: dict, combo_type: str) -> None:
                 path = os.path.join(client_dir, *f.split("/"))
                 ok(f) if os.path.isfile(path) else fail(f)
 
+        elif combo_type == "nextjs-nextauth":
+            test_nextjs_nextauth_client(client_dir)
+            no_server = not os.path.isdir(server_dir)
+            ok("no server/ dir") if no_server else fail("no server/ dir")
+            for f in ["auth.ts", "middleware.ts", "app/api/auth/[...nextauth]/route.ts", "app/providers.tsx"]:
+                path = os.path.join(client_dir, *f.split("/"))
+                ok(f) if os.path.isfile(path) else fail(f)
+
         elif combo_type == "vue":
             test_vue_client(client_dir)
             test_node_prisma_server(server_dir)
@@ -331,6 +351,14 @@ P9 = {
     },
     "project_name": "test-django",
 }
+P10 = {
+    "stack": {
+        "frontend": "Next.js",    "backend": "None",
+        "database": "PostgreSQL", "auth": "NextAuth",
+        "deployment": "Vercel",   "additional": [],
+    },
+    "project_name": "test-nextauth",
+}
 # --- engine v2 candidate combos (🟡 — snippets exist, not yet hand-tested) ---
 P5 = {
     "stack": {
@@ -390,6 +418,8 @@ def main() -> None:
         test_combo("Combo 8 — React + Express + Firebase Auth (🟡)", P8, "node-prisma-firebase")
     if combo in ("9", "all"):
         test_combo("Combo 9 — React + Django + Auth0 (🟡)", P9, "django")
+    if combo in ("10", "all"):
+        test_combo("Combo 10 — Next.js + NextAuth (🟡)", P10, "nextjs-nextauth")
 
     test_validation()
 

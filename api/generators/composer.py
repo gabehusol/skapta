@@ -69,28 +69,33 @@ def _select(ctx: M.Ctx, rules) -> str | None:
 def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
     spec = _match(stack.frontend, M.FRONTENDS, M.FRONTEND_FALLBACK)
     files: dict[str, str] = {}
-    if not _exists(spec.dir):
+
+    # An (frontend, auth) pair may select a different frontend app dir (irreducible
+    # glue, e.g. Next.js + NextAuth). Layout is still the matched spec's.
+    auth = _match(stack.auth, M.AUTHS)
+    src_dir = M.FRONTEND_AUTH_DIR.get((spec.match, auth.match if auth else None), spec.dir)
+    if not _exists(src_dir):
         return files
 
     if spec.layout == M.LAYOUT_TREE:
         # Preserve the full directory tree under client/ (e.g. Next.js app dir).
-        for f in (SNIPPETS_DIR / spec.dir).rglob("*"):
+        for f in (SNIPPETS_DIR / src_dir).rglob("*"):
             if f.is_file():
-                rel = f.relative_to(SNIPPETS_DIR / spec.dir).as_posix()
-                files[f"client/{rel.replace('.template', '')}"] = _load(f"{spec.dir}/{rel}", project_name)
+                rel = f.relative_to(SNIPPETS_DIR / src_dir).as_posix()
+                files[f"client/{rel.replace('.template', '')}"] = _load(f"{src_dir}/{rel}", project_name)
         return files
 
     # SPLIT: flat dir — config files at client/, application source at client/src/.
     # package.json is composed from base + the auth provider's client fragment (so the
     # auth frontend dep — e.g. @auth0/auth0-react vs firebase — isn't hardcoded in the base).
-    for f in (SNIPPETS_DIR / spec.dir).iterdir():
+    for f in (SNIPPETS_DIR / src_dir).iterdir():
         if f.is_file() and f.name != "package.json.template":
             name = f.name.replace(".template", "")
             target = f"client/{name}" if name in M.SPLIT_ROOT_FILES else f"client/src/{name}"
-            files[target] = _load(f"{spec.dir}/{f.name}", project_name)
+            files[target] = _load(f"{src_dir}/{f.name}", project_name)
 
-    if _exists(f"{spec.dir}/package.json.template"):
-        base = _load(f"{spec.dir}/package.json.template", project_name)
+    if _exists(f"{src_dir}/package.json.template"):
+        base = _load(f"{src_dir}/package.json.template", project_name)
         fragments = _client_dep_fragments(stack, spec, project_name)
         files["client/package.json"] = (
             merge_package_json(base, *fragments) if fragments else base

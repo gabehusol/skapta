@@ -51,6 +51,14 @@ FRONTENDS = (
 )
 FRONTEND_FALLBACK = FRONTENDS[-1]  # React + Vite
 
+# Some (frontend, auth) pairs are irreducible glue — the whole frontend app differs
+# by auth, not just a pluggable provider (e.g. Next.js's auth touches layout,
+# middleware, route handlers). Maps (frontend match, auth match) -> alternative dir;
+# layout is inherited from the matched Frontend spec.
+FRONTEND_AUTH_DIR = {
+    ("next", "nextauth"): "frontend/nextjs-nextauth",
+}
+
 # In a SPLIT layout, these files live at client/ (next to package.json); everything
 # else is application source and goes to client/src/.
 SPLIT_ROOT_FILES = {

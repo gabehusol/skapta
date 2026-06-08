@@ -1,0 +1,8 @@
+# NextAuth (Auth.js v5) — all server-side, set in the Next.js app's .env.local
+# Generate a secret with: openssl rand -base64 32
+AUTH_SECRET=your_generated_secret
+
+# GitHub OAuth app — GitHub → Settings → Developer settings → OAuth Apps.
+# Authorization callback URL: http://localhost:3000/api/auth/callback/github
+AUTH_GITHUB_ID=your_github_client_id
+AUTH_GITHUB_SECRET=your_github_client_secret
