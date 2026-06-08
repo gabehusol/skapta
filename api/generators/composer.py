@@ -79,12 +79,34 @@ def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, st
         return files
 
     # SPLIT: flat dir — config files at client/, application source at client/src/.
+    # package.json is composed from base + the auth provider's client fragment (so the
+    # auth frontend dep — e.g. @auth0/auth0-react vs firebase — isn't hardcoded in the base).
     for f in (SNIPPETS_DIR / spec.dir).iterdir():
-        if f.is_file():
+        if f.is_file() and f.name != "package.json.template":
             name = f.name.replace(".template", "")
             target = f"client/{name}" if name in M.SPLIT_ROOT_FILES else f"client/src/{name}"
             files[target] = _load(f"{spec.dir}/{f.name}", project_name)
+
+    if _exists(f"{spec.dir}/package.json.template"):
+        base = _load(f"{spec.dir}/package.json.template", project_name)
+        fragments = _client_dep_fragments(stack, spec, project_name)
+        files["client/package.json"] = (
+            merge_package_json(base, *fragments) if fragments else base
+        )
     return files
+
+
+def _client_dep_fragments(stack: StackSelection, fe_spec, project_name: str) -> list[str]:
+    """Client package.json fragments the auth provider contributes — only for the
+    React SPA contract (`react-provider.tsx`). Vue keeps its Auth0 dep baked into its
+    own package.json (it isn't part of the pluggable React frontend contract)."""
+    if fe_spec.match != "react":
+        return []
+    auth = _match(stack.auth, M.AUTHS)
+    if auth is None or not auth.client_dep:
+        return []
+    rel = f"{auth.dir}/{auth.client_dep}"
+    return [_load(rel, project_name)] if _exists(rel) else []
 
 
 # ---------------------------------------------------------------------------
@@ -148,10 +170,10 @@ def _auth_snippets(stack: StackSelection, project_name: str) -> dict[str, str]:
         if variant_dest:
             _emit(files, spec.dir, *variant_dest, project_name)
 
-    # Frontend provider, keyed on frontend kind.
+    # Frontend provider, keyed on the frontend framework (react | vue | next) so a
+    # React provider never leaks into a Vue project (and vice-versa).
     fe = _match(stack.frontend, M.FRONTENDS, M.FRONTEND_FALLBACK)
-    fe_kind = "next" if fe.match == "next" else "spa"
-    variant_dest = spec.frontend_provider.get(fe_kind)
+    variant_dest = spec.frontend_provider.get(fe.match)
     if variant_dest:
         _emit(files, spec.dir, *variant_dest, project_name)
 

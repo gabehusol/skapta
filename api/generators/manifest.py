@@ -84,9 +84,10 @@ MANIFEST_TEMPLATES = {"package.json.template", "requirements.txt.template"}
 
 # ---------------------------------------------------------------------------
 # Auth — the layer contract (see DESIGN: Layer Contracts).
-# backend_variants: backend canonical match -> (variant file, dest path)
-# frontend_provider: "next" | "spa"         -> (variant file, dest path)
-# glue:             irreducible combo files  (frontend match, variant file, dest path)
+# backend_variants:  backend canonical match  -> (variant file, dest path)
+# frontend_provider: frontend match (react|vue|next) -> (variant file, dest path)
+# client_dep:        client package.json fragment filename in the auth dir (or None)
+# glue:              irreducible combo files (frontend match, variant file, dest path)
 # ---------------------------------------------------------------------------
 _EXPRESS_GUARD = ("express.ts", "server/src/middleware/auth.ts")
 _FASTAPI_GUARD = ("fastapi.py", "server/auth/provider.py")
@@ -101,6 +102,7 @@ class Auth:
     dir: str
     backend_variants: dict = field(default_factory=dict)
     frontend_provider: dict = field(default_factory=dict)
+    client_dep: str | None = None   # client package.json fragment in the auth dir
     glue: tuple = ()
 
 
@@ -112,10 +114,12 @@ AUTHS = (
          frontend_provider={"next": _NEXT_PROVIDER}),
     Auth("firebase", "auth/firebase-auth",
          backend_variants={"express": _EXPRESS_GUARD, "fastapi": _FASTAPI_GUARD},
-         frontend_provider={"spa": _REACT_PROVIDER, "next": _NEXT_PROVIDER}),
+         frontend_provider={"react": _REACT_PROVIDER, "next": _NEXT_PROVIDER},
+         client_dep="client.package.deps.json"),
     Auth("auth0", "auth/auth0",
          backend_variants={"express": _EXPRESS_GUARD, "fastapi": _FASTAPI_GUARD, "django": _DJANGO_GUARD},
-         frontend_provider={"spa": _REACT_PROVIDER, "next": _NEXT_PROVIDER}),
+         frontend_provider={"react": _REACT_PROVIDER, "next": _NEXT_PROVIDER},
+         client_dep="client.package.deps.json"),
 )
 # No auth fallback: an unrecognised auth contributes no files (matches v1 behaviour).
 
