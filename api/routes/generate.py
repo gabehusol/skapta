@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from limiter import limiter
 from models.generate import GenerateRequest, GenerationOptions, StackSelection
 from services.generate_service import generate_project
 
@@ -12,16 +13,17 @@ router = APIRouter()
 
 
 @router.post("/generate")
-async def generate(request: GenerateRequest):
+@limiter.limit("20/minute;200/day")
+async def generate(request: Request, body: GenerateRequest):
     try:
-        buf = generate_project(request)
+        buf = generate_project(body)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         logger.exception("Unexpected error in /api/generate")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    filename = f"{request.project_name or 'my-app'}.zip"
+    filename = f"{body.project_name or 'my-app'}.zip"
 
     return StreamingResponse(
         buf,
