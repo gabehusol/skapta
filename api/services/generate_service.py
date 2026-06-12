@@ -8,9 +8,9 @@ from generators.zip_builder import build_zip
 # --- Compatibility matrix from DESIGN.md ---
 
 _DB_AUTH = {
-    "postgresql": {"auth0", "nextauth", "firebase auth", "supabase auth"},
+    "postgresql": {"auth0", "nextauth", "firebase auth", "supabase"},
     "mongodb": {"auth0", "firebase auth", "nextauth"},
-    "supabase": {"supabase auth", "auth0"},
+    "supabase": {"supabase", "auth0"},
     "mysql": {"auth0", "nextauth", "firebase auth"},
 }
 

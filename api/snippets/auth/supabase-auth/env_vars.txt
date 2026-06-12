@@ -2,3 +2,6 @@
 # Project Settings → API in your Supabase dashboard
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_public_key
+# Server-side only (never expose this key to the client)
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key

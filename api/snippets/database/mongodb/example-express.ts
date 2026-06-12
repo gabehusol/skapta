@@ -6,9 +6,9 @@ export const exampleRouter = Router()
 
 exampleRouter.get('/users/me', requireAuth, async (req, res) => {
   try {
-    const auth0Id = req.auth?.payload.sub as string
+    const userId = (req as any).user?.id as string
 
-    const user = await User.findOne({ auth0Id })
+    const user = await User.findOne({ auth0Id: userId })
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -23,11 +23,11 @@ exampleRouter.get('/users/me', requireAuth, async (req, res) => {
 
 exampleRouter.post('/users/me', requireAuth, async (req, res) => {
   try {
-    const auth0Id = req.auth?.payload.sub as string
+    const userId = (req as any).user?.id as string
     const { name, email } = req.body
 
     const user = await User.findOneAndUpdate(
-      { auth0Id },
+      { auth0Id: userId },
       { $set: { name, email } },
       { new: true, upsert: true, setDefaultsOnInsert: true },
     )

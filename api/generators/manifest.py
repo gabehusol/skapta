@@ -117,6 +117,7 @@ class Auth:
 
 AUTHS = (
     Auth("supabase", "auth/supabase-auth",
+         backend_variants={"express": _EXPRESS_GUARD},
          glue=(("next", "nextjs.ts", "client/lib/supabase/middleware.ts"),)),
     Auth("nextauth", "auth/nextauth",
          backend_variants={"express": _EXPRESS_GUARD},
