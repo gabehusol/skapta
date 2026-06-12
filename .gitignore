@@ -24,9 +24,11 @@ ml/venv/
 api/.env
 ml/.env
 
-# Architechture
+# Architecture, local planning docs
 DESIGN.md
+DEPLOY.md
 
-# Dev-only regression snapshots (scripts/snapshot_combos.py output)
-.snapshots/.claude/
+# Other dev stuff like claude integration
+.snapshots/
+.claude/
 api/_start.ps1
