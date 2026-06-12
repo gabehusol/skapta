@@ -148,6 +148,11 @@ DATABASES = (
     Database("supabase", "database/supabase", (
         ("client-nextjs.ts", "client/lib/supabase/client.ts", None),
         ("server-nextjs.ts", "client/lib/supabase/server.ts", None),
+        # Express API server: replace the Prisma-based connection + route with
+        # Supabase-native equivalents. Applied after the backend snippet so they
+        # win the key collision, same pattern as MongoDB.
+        ("express-connection.ts", "server/src/db/connection.ts", "node_backend"),
+        ("example-express.ts", "server/src/routes/example.ts", "node_backend"),
     )),
     Database("mongo", "database/mongodb", (
         ("mongoose-express.ts", "server/src/db/connection.ts", None),
