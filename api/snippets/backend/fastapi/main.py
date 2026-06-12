@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 # Load .env before importing modules that read environment variables at import time.
 load_dotenv()
 
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -12,11 +13,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from db.connection import init_db
 from routes.example import router as example_router
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # v1 has no migration tool — create tables on boot.
-    init_db()
+    # A missing database at startup only blocks DB-dependent routes, not /health.
+    try:
+        init_db()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Database unavailable at startup — DB routes will fail: %s", exc)
     yield
 
 

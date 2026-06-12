@@ -7,17 +7,24 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
-AUTH0_DOMAIN = os.environ["AUTH0_DOMAIN"]
-AUTH0_AUDIENCE = os.environ["AUTH0_AUDIENCE"]
 ALGORITHMS = ["RS256"]
 
-bearer_scheme = HTTPBearer()
+# auto_error=False so we can return 401 (not 403) when no credentials are supplied.
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def _auth0_domain() -> str:
+    return os.environ["AUTH0_DOMAIN"]
+
+
+def _auth0_audience() -> str:
+    return os.environ["AUTH0_AUDIENCE"]
 
 
 @lru_cache(maxsize=1)
 def _get_jwks() -> dict:
     """Fetches Auth0's public signing keys. Cached for the process lifetime."""
-    url = f"https://{AUTH0_DOMAIN}/.well-known/jwks.json"
+    url = f"https://{_auth0_domain()}/.well-known/jwks.json"
     with urllib.request.urlopen(url, timeout=5) as resp:  # noqa: S310 (trusted Auth0 URL)
         return json.loads(resp.read())
 
@@ -49,12 +56,14 @@ def _unauthorized(detail: str) -> HTTPException:
 
 
 def require_auth(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict:
     """FastAPI dependency that validates an Auth0 RS256 access token.
 
     Returns the decoded JWT claims (`sub` is the Auth0 user id).
     """
+    if credentials is None:
+        raise _unauthorized("No credentials provided.")
     token = credentials.credentials
     rsa_key = _signing_key(token)
     try:
@@ -62,8 +71,8 @@ def require_auth(
             token,
             rsa_key,
             algorithms=ALGORITHMS,
-            audience=AUTH0_AUDIENCE,
-            issuer=f"https://{AUTH0_DOMAIN}/",
+            audience=_auth0_audience(),
+            issuer=f"https://{_auth0_domain()}/",
         )
     except JWTError as err:
         raise _unauthorized(f"Invalid token: {err}") from err

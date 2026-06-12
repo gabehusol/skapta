@@ -3,18 +3,28 @@ from contextlib import contextmanager
 
 from psycopg2.pool import SimpleConnectionPool
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("Missing DATABASE_URL environment variable. Check your .env file.")
+# Pool is initialised lazily on first use so the server can start and fail
+# with a clear error even when the database is temporarily unavailable.
+_pool: SimpleConnectionPool | None = None
 
-# A small pooled set of connections, reused across requests.
-_pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
+
+def _get_pool() -> SimpleConnectionPool:
+    global _pool
+    if _pool is None:
+        url = os.environ.get("DATABASE_URL")
+        if not url:
+            raise RuntimeError(
+                "Missing DATABASE_URL environment variable. Check your .env file."
+            )
+        _pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn=url)
+    return _pool
 
 
 @contextmanager
 def get_connection():
     """Borrow a connection from the pool. Commits on success, rolls back on error."""
-    conn = _pool.getconn()
+    pool = _get_pool()
+    conn = pool.getconn()
     try:
         yield conn
         conn.commit()
@@ -22,7 +32,7 @@ def get_connection():
         conn.rollback()
         raise
     finally:
-        _pool.putconn(conn)
+        pool.putconn(conn)
 
 
 def init_db() -> None:
