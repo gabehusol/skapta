@@ -1,19 +1,11 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { LoginButton } from './auth-buttons'
 
-// Home page — server component. Already-authenticated users are sent straight
-// to the dashboard; everyone else gets a sign-in button.
-export default async function HomePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect('/dashboard')
-  }
-
+// Home page -- shows a sign-in prompt.
+// Supabase: this file is replaced by a server-component version that checks the
+// session cookie and auto-redirects authenticated users to /dashboard.
+// Auth0 / Firebase: auth is client-side; the AuthProvider + RequireAuth in
+// dashboard/page.tsx handles the redirect after sign-in.
+export default function HomePage() {
   return (
     <main>
       <h1>{{PROJECT_NAME}}</h1>

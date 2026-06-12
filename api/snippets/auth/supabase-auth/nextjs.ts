@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Refreshes the Supabase auth session on every request and guards protected
 // routes. Called from the root `middleware.ts`. Do not add code between
-// `createServerClient` and `supabase.auth.getUser()` — it must run first so the
+// `createServerClient` and `supabase.auth.getUser()` -- it must run first so the
 // session token is refreshed before anything reads it.
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

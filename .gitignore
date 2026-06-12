@@ -24,5 +24,11 @@ ml/venv/
 api/.env
 ml/.env
 
-# Architechture
+# Architecture, local planning docs
 DESIGN.md
+DEPLOY.md
+
+# Other dev stuff like claude integration
+.snapshots/
+.claude/
+api/_start.ps1

@@ -6,10 +6,10 @@ export const exampleRouter = Router()
 
 exampleRouter.get('/users/me', requireAuth, async (req, res) => {
   try {
-    const auth0Id = req.auth?.payload.sub as string
+    const userId = (req as any).user?.id as string
 
     const user = await prisma.user.findUnique({
-      where: { auth0Id },
+      where: { auth0Id: userId },
     })
 
     if (!user) {
@@ -25,13 +25,13 @@ exampleRouter.get('/users/me', requireAuth, async (req, res) => {
 
 exampleRouter.post('/users/me', requireAuth, async (req, res) => {
   try {
-    const auth0Id = req.auth?.payload.sub as string
+    const userId = (req as any).user?.id as string
     const { name, email } = req.body
 
     const user = await prisma.user.upsert({
-      where: { auth0Id },
+      where: { auth0Id: userId },
       update: { name, email },
-      create: { auth0Id, name, email },
+      create: { auth0Id: userId, name, email },
     })
 
     res.json(user)

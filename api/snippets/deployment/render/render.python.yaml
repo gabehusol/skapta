@@ -1,0 +1,15 @@
+# Render Blueprint -- FastAPI backend.
+# Create a new Blueprint instance from this repo at https://render.com.
+services:
+  - type: web
+    name: {{PROJECT_NAME}}-server
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    # Tables are created on startup (init_db) -- no migration step in v1.
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      # Set DATABASE_URL, AUTH0_DOMAIN, AUTH0_AUDIENCE, CLIENT_URL in the dashboard.

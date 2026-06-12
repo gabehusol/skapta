@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-// Browser Supabase client — safe to use in Client Components ('use client').
+// Browser Supabase client -- safe to use in Client Components ('use client').
 // Reads the public anon key; row-level security is enforced server-side by Supabase.
 export function createClient() {
   return createBrowserClient(

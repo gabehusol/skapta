@@ -1,8 +1,12 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+// Pass-through middleware -- a real implementation is injected by your auth provider.
+// Supabase: refreshes the session cookie via lib/supabase/middleware.ts
+// NextAuth: handled by the nextjs-nextauth frontend variant
+// Auth0 / Firebase: client-side SDKs -- no server middleware required
+export function middleware(_request: NextRequest) {
+  return NextResponse.next()
 }
 
 export const config = {

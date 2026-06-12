@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "cd server && npm install && npm run build"
 
 [deploy]
-# MongoDB has no schema push step — Mongoose connects on boot.
+# MongoDB has no schema push step -- Mongoose connects on boot.
 startCommand = "cd server && npm start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5

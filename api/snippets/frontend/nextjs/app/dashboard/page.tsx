@@ -1,24 +1,15 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { SignOutButton } from '../auth-buttons'
 
-// Protected page — server-side auth check. The middleware also guards
-// /dashboard, but we re-check here so the page is safe on its own and we have
-// the user record to render.
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/')
-  }
-
+// Dashboard -- protected page.
+// Supabase: this file is replaced by a server-component version that verifies
+// the session cookie and redirects unauthenticated users back to /.
+// Auth0 / Firebase: wrap this content in <RequireAuth> (from AuthProvider) to
+// protect it client-side, or add a redirect inside a useEffect.
+export default function DashboardPage() {
   return (
     <main>
-      <h1>Welcome, {user.user_metadata?.full_name ?? user.email}</h1>
-      <p>{user.email}</p>
+      <h1>Dashboard</h1>
+      <p>You are signed in.</p>
       <SignOutButton />
     </main>
   )

@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.16.1",
+    "prisma": "^5.16.1"
+  }
+}

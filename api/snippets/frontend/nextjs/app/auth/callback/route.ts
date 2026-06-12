@@ -1,21 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 
-// OAuth / magic-link callback. Supabase redirects here with a `code`, which we
-// exchange for a session cookie before forwarding the user on.
-export async function GET(request: Request) {
+// Generic auth callback -- forwards the user to the `next` param (default /dashboard).
+// For Supabase: this file is replaced by the supabase-auth snippet which exchanges
+// the OAuth code for a session cookie before redirecting.
+// For Auth0 / Firebase: the redirect is handled by the client-side SDK; this
+// route just acts as a landing page.
+export function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
-
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
-  }
-
-  // No code or exchange failed — bounce home with an error flag.
-  return NextResponse.redirect(`${origin}/?error=auth`)
+  return NextResponse.redirect(`${origin}${next}`)
 }

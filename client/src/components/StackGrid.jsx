@@ -28,6 +28,22 @@ export default function StackGrid({ recommendations, projectName, description })
     setOverrides(prev => ({ ...prev, [category]: value }))
   }
 
+  // When Next.js is the (effective) frontend, the project has built-in API routes and
+  // needs no separate backend — surface a "None" option on the backend card so the
+  // Next.js combo can be generated from the UI (previously required a direct API call).
+  const effectiveFrontend = overrides.frontend ?? recommendations.frontend?.choice ?? ''
+  const isNextFrontend = effectiveFrontend.toLowerCase().includes('next')
+
+  const cardData = cat => {
+    const data = recommendations[cat]
+    if (cat === 'backend' && isNextFrontend && data) {
+      const alts = data.alternatives ?? []
+      const hasNone = data.choice?.toLowerCase() === 'none' || alts.some(a => a?.toLowerCase() === 'none')
+      if (!hasNone) return { ...data, alternatives: ['None', ...alts] }
+    }
+    return data
+  }
+
   const handleGenerate = () => {
     const stack = {}
     for (const cat of MAIN_CATEGORIES) {
@@ -64,7 +80,7 @@ export default function StackGrid({ recommendations, projectName, description })
             <RecommendationCard
               key={cat}
               category={cat}
-              data={recommendations[cat]}
+              data={cardData(cat)}
               onOverride={handleOverride}
             />
           ) : null

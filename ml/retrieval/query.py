@@ -1,5 +1,6 @@
 # Embeds a user query and searches Pinecone for the top-k most similar chunks
 import os
+from functools import lru_cache
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
@@ -8,10 +9,17 @@ load_dotenv()
 
 MODEL_NAME = "all-mpnet-base-v2"
 
+
+#load the embedding model once and reuse it (loading per request is slow and
+#spikes RAM — see DEPLOY.md §1)
+@lru_cache(maxsize=1)
+def _get_model() -> SentenceTransformer:
+    return SentenceTransformer(MODEL_NAME)
+
+
 #embed with same model
 def embed_query(query: str) -> list[float]:
-    model = SentenceTransformer(MODEL_NAME)
-    embedding = model.encode(query)
+    embedding = _get_model().encode(query)
     return embedding.tolist()
 
 #embeds query and searches pinecone for top k most similar

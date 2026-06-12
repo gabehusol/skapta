@@ -4,6 +4,7 @@ pydantic
 pydantic-settings
 python-dotenv
 httpx
+slowapi
 langchain
 langchain-openai
 langchain-groq
