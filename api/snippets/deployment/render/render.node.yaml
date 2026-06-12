@@ -1,4 +1,4 @@
-# Render Blueprint — Node/Express + Prisma backend.
+# Render Blueprint -- Node/Express + Prisma backend.
 # Create a new Blueprint instance from this repo at https://render.com.
 services:
   - type: web

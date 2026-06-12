@@ -47,7 +47,7 @@ function LoadingScreen() {
 }
 
 // Protect a route: wait for Auth0 to finish loading, then redirect to login if
-// unauthenticated. The redirect runs in an effect, never during render — see
+// unauthenticated. The redirect runs in an effect, never during render -- see
 // Generation Convention #9 (calling loginWithRedirect in render causes a loop).
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0()

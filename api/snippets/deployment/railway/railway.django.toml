@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "cd server && pip install -r requirements.txt"
 
 [deploy]
-# v1 has no migration files — `migrate --run-syncdb` creates the app's tables on boot.
+# v1 has no migration files -- `migrate --run-syncdb` creates the app's tables on boot.
 startCommand = "cd server && python manage.py migrate --run-syncdb && gunicorn config.wsgi --bind 0.0.0.0:$PORT"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5

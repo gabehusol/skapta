@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "cd server && npm install && npx prisma generate && npm run build"
 
 [deploy]
-# v1 bootstraps the schema with `prisma db push` (no migration files yet) — see
+# v1 bootstraps the schema with `prisma db push` (no migration files yet) -- see
 # Generation Convention #8. Matches the README, setup scripts, and render.yaml.
 startCommand = "cd server && npx prisma db push && npm start"
 restartPolicyType = "on_failure"

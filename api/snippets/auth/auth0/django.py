@@ -44,7 +44,7 @@ def _signing_key(token: str) -> dict:
 
 
 class _Auth0User:
-    """Minimal authenticated principal — DRF needs `is_authenticated` and an id."""
+    """Minimal authenticated principal -- DRF needs `is_authenticated` and an id."""
 
     is_authenticated = True
 
@@ -62,7 +62,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         header = request.META.get("HTTP_AUTHORIZATION", "")
         if not header.startswith("Bearer "):
-            return None  # no credentials → DRF treats the request as anonymous
+            return None  # no credentials -> DRF treats the request as anonymous
 
         token = header.split(" ", 1)[1]
         domain = _auth0_domain()

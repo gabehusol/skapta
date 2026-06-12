@@ -7,7 +7,7 @@ if (!MONGODB_URI) {
 }
 
 // Connect once at startup. Mongoose buffers commands until the connection is
-// ready, so routes can import models and query immediately — no need to await
+// ready, so routes can import models and query immediately -- no need to await
 // the connection in index.ts.
 mongoose
   .connect(MONGODB_URI)

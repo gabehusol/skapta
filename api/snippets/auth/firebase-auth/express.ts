@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 import admin from 'firebase-admin'
 
 // Backend half of the auth layer contract for Firebase Auth (Express).
-// Validates a Firebase ID token and attaches req.user.id — the same shape
+// Validates a Firebase ID token and attaches req.user.id -- the same shape
 // the example routes consume, so routes stay auth-agnostic.
 
 // Lazily initialised so the server starts cleanly without credentials at

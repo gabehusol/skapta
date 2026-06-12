@@ -7,13 +7,13 @@ override approach (e.g. the Mongo combo overwriting the entire server
 `package.json`), which could not stack with add-ons.
 
 Three mergers, one per shared file type:
-- `merge_package_json` — deep-merge; dependency maps merged + sorted, `scripts`
+- `merge_package_json` -- deep-merge; dependency maps merged + sorted, `scripts`
   merged preserving insertion order (base first, then fragments).
-- `merge_requirements` — union of pinned lines, de-duplicated by package name,
+- `merge_requirements` -- union of pinned lines, de-duplicated by package name,
   order preserved (base first, then fragments).
-- `merge_tsconfig` — deep-merge of `compilerOptions`; arrays unioned.
+- `merge_tsconfig` -- deep-merge of `compilerOptions`; arrays unioned.
 
-Merging only happens when there is something to merge — callers emit a single
+Merging only happens when there is something to merge -- callers emit a single
 file as-is when it has no fragments, so byte output is unchanged for stacks that
 don't actually compose that file (keeps the verified combos identical).
 """
@@ -23,7 +23,7 @@ from collections import OrderedDict
 from typing import Any
 
 # Dependency maps are sorted on output (npm doesn't care about order, and the
-# existing hand-written templates list deps alphabetically — matching keeps the
+# existing hand-written templates list deps alphabetically -- matching keeps the
 # generated output stable and diff-clean).
 _SORTED_KEYS = ("dependencies", "devDependencies", "peerDependencies")
 

@@ -1,4 +1,4 @@
-# Render Blueprint — Node/Express + MongoDB backend.
+# Render Blueprint -- Node/Express + MongoDB backend.
 # Create a new Blueprint instance from this repo at https://render.com.
 services:
   - type: web
@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: server
     buildCommand: npm install && npm run build
-    # MongoDB has no schema push step — Mongoose connects on boot.
+    # MongoDB has no schema push step -- Mongoose connects on boot.
     startCommand: npm start
     envVars:
       - key: NODE_ENV

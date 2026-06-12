@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # v1 has no migration tool — create tables on boot.
+    # v1 has no migration tool -- create tables on boot.
     # A missing database at startup only blocks DB-dependent routes, not /health.
     try:
         init_db()
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Database unavailable at startup — DB routes will fail: %s", exc)
+        logger.warning("Database unavailable at startup -- DB routes will fail: %s", exc)
     yield
 
 

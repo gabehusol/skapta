@@ -1,4 +1,4 @@
-# Render Blueprint — Django + DRF backend.
+# Render Blueprint -- Django + DRF backend.
 # Create a new Blueprint instance from this repo at https://render.com.
 services:
   - type: web
@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: server
     buildCommand: pip install -r requirements.txt
-    # v1 has no migration files — `migrate --run-syncdb` creates tables on boot.
+    # v1 has no migration files -- `migrate --run-syncdb` creates tables on boot.
     startCommand: python manage.py migrate --run-syncdb && gunicorn config.wsgi --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION

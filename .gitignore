@@ -28,4 +28,5 @@ ml/.env
 DESIGN.md
 
 # Dev-only regression snapshots (scripts/snapshot_combos.py output)
-.snapshots/
+.snapshots/.claude/
+api/_start.ps1

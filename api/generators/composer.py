@@ -1,7 +1,7 @@
 """Generic composition engine (engine v2, pillar 3).
 
 Reads the declarative registry in `manifest.py` and assembles the file map for a
-stack. There are no `if "fastapi" in backend` ladders here — technology selection
+stack. There are no `if "fastapi" in backend` ladders here -- technology selection
 is data (the registry); this module only knows the *structural* operations
 (directory walk, the two frontend layouts, manifest merging).
 """
@@ -83,11 +83,17 @@ def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, st
             if f.is_file():
                 rel = f.relative_to(SNIPPETS_DIR / src_dir).as_posix()
                 files[f"client/{rel.replace('.template', '')}"] = _load(f"{src_dir}/{rel}", project_name)
+        # Merge auth client deps into client/package.json (same as SPLIT layout).
+        # The tree copy above already included the raw template; overwrite with merged.
+        fragments = _client_dep_fragments(stack, spec, project_name)
+        if fragments and _exists(f"{src_dir}/package.json.template"):
+            base = _load(f"{src_dir}/package.json.template", project_name)
+            files["client/package.json"] = merge_package_json(base, *fragments)
         return files
 
-    # SPLIT: flat dir — config files at client/, application source at client/src/.
+    # SPLIT: flat dir -- config files at client/, application source at client/src/.
     # package.json is composed from base + the auth provider's client fragment (so the
-    # auth frontend dep — e.g. @auth0/auth0-react vs firebase — isn't hardcoded in the base).
+    # auth frontend dep -- e.g. @auth0/auth0-react vs firebase -- isn't hardcoded in the base).
     for f in (SNIPPETS_DIR / src_dir).iterdir():
         if f.is_file() and f.name != "package.json.template":
             name = f.name.replace(".template", "")
@@ -104,10 +110,10 @@ def _frontend_snippets(stack: StackSelection, project_name: str) -> dict[str, st
 
 
 def _client_dep_fragments(stack: StackSelection, fe_spec, project_name: str) -> list[str]:
-    """Client package.json fragments the auth provider contributes — only for the
-    React SPA contract (`react-provider.tsx`). Vue keeps its Auth0 dep baked into its
-    own package.json (it isn't part of the pluggable React frontend contract)."""
-    if fe_spec.match != "react":
+    """Client package.json fragments the auth provider contributes.
+    Applies to React and Next.js frontends that use a pluggable auth provider file.
+    Vue keeps its Auth0 dep baked into its own package.json template."""
+    if fe_spec.match not in ("react", "next"):
         return []
     auth = _match(stack.auth, M.AUTHS)
     if auth is None or not auth.client_dep:

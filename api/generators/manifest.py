@@ -1,29 +1,29 @@
 """Declarative snippet registry (engine v2, pillar 3).
 
 The single source of truth for *which* snippet a given technology contributes and
-*where* it lands. `composer.py` is a generic resolver that reads these tables —
+*where* it lands. `composer.py` is a generic resolver that reads these tables --
 adding a technology to an axis is a data edit here, not surgery across the
 composer's functions.
 
 What stays as data here:
 - per-tech snippet directory + how to match a stack selection string to it,
-- variant→destination mappings (auth guards, db clients),
+- variant->destination mappings (auth guards, db clients),
 - the small conditional matrices (docker image, railway/compose variant, gitignore)
   expressed as ordered (predicate, value) rules evaluated against a `Ctx`.
 
 What stays as code in the composer: the two frontend *layout* strategies
-(`tree` vs `split`) and the directory walk — genuine structure, not a tech ladder.
+(`tree` vs `split`) and the directory walk -- genuine structure, not a tech ladder.
 """
 from dataclasses import dataclass, field
 
 
 # ---------------------------------------------------------------------------
-# Stack classification — predicates the conditional rules below evaluate against.
+# Stack classification -- predicates the conditional rules below evaluate against.
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Ctx:
     is_python: bool      # FastAPI/Django backend
-    is_django: bool      # Django backend (a subset of is_python — gets its own tooling)
+    is_django: bool      # Django backend (a subset of is_python -- gets its own tooling)
     is_mongo: bool       # MongoDB database
     is_next: bool        # Next.js frontend
     has_backend: bool    # a separate server process exists
@@ -34,7 +34,7 @@ class Ctx:
 # Frontend
 # ---------------------------------------------------------------------------
 LAYOUT_TREE = "tree"     # copy the whole dir tree under client/ (Next.js app dir)
-LAYOUT_SPLIT = "split"   # flat dir: config files → client/, source → client/src/
+LAYOUT_SPLIT = "split"   # flat dir: config files -> client/, source -> client/src/
 
 
 @dataclass(frozen=True)
@@ -51,7 +51,7 @@ FRONTENDS = (
 )
 FRONTEND_FALLBACK = FRONTENDS[-1]  # React + Vite
 
-# Some (frontend, auth) pairs are irreducible glue — the whole frontend app differs
+# Some (frontend, auth) pairs are irreducible glue -- the whole frontend app differs
 # by auth, not just a pluggable provider (e.g. Next.js's auth touches layout,
 # middleware, route handlers). Maps (frontend match, auth match) -> alternative dir;
 # layout is inherited from the matched Frontend spec.
@@ -87,12 +87,12 @@ BACKENDS = (
 )
 BACKEND_FALLBACK = BACKENDS[-1]  # Express (matches "node.js + express")
 
-# Manifest files are not copied verbatim — they are merged from base + fragments.
+# Manifest files are not copied verbatim -- they are merged from base + fragments.
 MANIFEST_TEMPLATES = {"package.json.template", "requirements.txt.template"}
 
 
 # ---------------------------------------------------------------------------
-# Auth — the layer contract (see DESIGN: Layer Contracts).
+# Auth -- the layer contract (see DESIGN: Layer Contracts).
 # backend_variants:  backend canonical match  -> (variant file, dest path)
 # frontend_provider: frontend match (react|vue|next) -> (variant file, dest path)
 # client_dep:        client package.json fragment filename in the auth dir (or None)
@@ -118,12 +118,23 @@ class Auth:
 AUTHS = (
     Auth("supabase", "auth/supabase-auth",
          backend_variants={"express": _EXPRESS_GUARD},
-         glue=(("next", "nextjs.ts", "client/lib/supabase/middleware.ts"),)),
-    Auth("nextauth", "auth/nextauth",
-         backend_variants={"express": _EXPRESS_GUARD},
-         frontend_provider={"next": _NEXT_PROVIDER}),
+         client_dep="client.package.deps.json",
+         glue=(
+             ("next", "nextjs.ts",               "client/lib/supabase/middleware.ts"),
+             ("next", "nextjs-middleware.ts",     "client/middleware.ts"),
+             ("next", "nextjs-callback.ts",       "client/app/auth/callback/route.ts"),
+             ("next", "nextjs-auth-buttons.tsx",  "client/app/auth-buttons.tsx"),
+             ("next", "nextjs-page.tsx",          "client/app/page.tsx"),
+             ("next", "nextjs-dashboard.tsx",     "client/app/dashboard/page.tsx"),
+         )),
+    Auth("nextauth", "auth/nextauth"),
+    # NextAuth is Next.js-only -- handled via FRONTEND_AUTH_DIR (frontend/nextjs-nextauth).
+    # No backend_variants (Next.js handles auth in its own API routes, no separate server
+    # guard needed) and no frontend_provider (the whole nextjs-nextauth dir is the app).
     Auth("firebase", "auth/firebase-auth",
-         backend_variants={"express": _EXPRESS_GUARD, "fastapi": _FASTAPI_GUARD},
+         backend_variants={"express": _EXPRESS_GUARD},
+         # fastapi guard intentionally omitted -- firebase-auth/fastapi.py does not exist;
+         # Firebase + FastAPI is blocked in the validator until implemented.
          frontend_provider={"react": _REACT_PROVIDER, "next": _NEXT_PROVIDER},
          client_dep="client.package.deps.json"),
     Auth("auth0", "auth/auth0",
@@ -135,7 +146,7 @@ AUTHS = (
 
 
 # ---------------------------------------------------------------------------
-# Database — emits: (variant file, dest path, predicate attr on Ctx | None)
+# Database -- emits: (variant file, dest path, predicate attr on Ctx | None)
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Database:
@@ -159,21 +170,20 @@ DATABASES = (
         ("example-express.ts", "server/src/routes/example.ts", None),
     )),
     Database("mysql", "database/mysql", (
-        # Prisma (MySQL provider) — same shape as postgres, node backends only.
+        # Prisma (MySQL provider) -- schema only; connection.ts comes from backend/express.
         ("schema.prisma", "server/prisma/schema.prisma", "node_backend"),
-        ("prisma-express.ts", "server/src/db/connection.ts", "node_backend"),
     )),
     Database("postgres", "database/postgresql", (
-        # FastAPI/Django use psycopg2 from the backend snippet — Prisma is node-only.
+        # FastAPI/Django use psycopg2 from the backend snippet -- Prisma is node-only.
+        # connection.ts comes from backend/express; only schema needs overriding.
         ("schema.prisma", "server/prisma/schema.prisma", "node_backend"),
-        ("prisma-express.ts", "server/src/db/connection.ts", "node_backend"),
     )),
 )
 DATABASE_FALLBACK = DATABASES[-1]  # PostgreSQL
 
 
 # ---------------------------------------------------------------------------
-# Deployment — ordered (predicate attr | None, filename) rules. First match wins.
+# Deployment -- ordered (predicate attr | None, filename) rules. First match wins.
 # ---------------------------------------------------------------------------
 # Django rules are listed before the generic python rules (is_python is also true
 # for Django) so Django gets its own gunicorn/manage.py variants; FastAPI keeps the

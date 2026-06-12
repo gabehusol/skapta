@@ -16,7 +16,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', redirect: '/dashboard' },
-    // authGuard waits for Auth0 to finish loading before redirecting — never call
+    // authGuard waits for Auth0 to finish loading before redirecting -- never call
     // loginWithRedirect() during render (causes a redirect loop).
     { path: '/dashboard', component: DashboardView, beforeEnter: authGuard },
   ],
