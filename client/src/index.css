@@ -1,19 +1,27 @@
 @import "tailwindcss";
 
+/*
+ * Skapta strict two colour system.
+ * Base:  #252024 (near black)
+ * Light: #c7c7c5 (silver)
+ * Every surface, border and text tier below is one of those two colours,
+ * either at full strength or as a light over base blend / light opacity tier.
+ * No third hue is introduced anywhere.
+ */
 @theme {
-  /* Surfaces */
-  --color-bg: #080808;
-  --color-surface: #111111;
-  --color-elevated: #1a1a1a;
-  --color-hairline: #222222;
+  /* Surfaces, light blended over the base at 0 / 4 / 8 / 14% */
+  --color-bg: #252024;
+  --color-surface: #2b272a;   /* ~4% light over bg  */
+  --color-elevated: #322d31;  /* ~8% light over bg  */
+  --color-hairline: #3c373b;  /* ~14% light over bg */
 
-  /* Accent */
-  --color-accent: #f97316;
+  /* Text, light at 100 / 60 / 38% over the base */
+  --color-ink: #c7c7c5;
+  --color-muted: #868485;
+  --color-faint: #635f61;
 
-  /* Text */
-  --color-ink: #f5f5f5;
-  --color-muted: #666666;
-  --color-faint: #333333;
+  /* Light as a fill (inverted primary button) */
+  --color-cream: #c7c7c5;
 
   /* Fonts */
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -21,14 +29,6 @@
     "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
 }
 
-/* ── Raw CSS variables for rgba references ── */
-:root {
-  --accent-glow: rgba(249, 115, 22, 0.15);
-  --accent-glow-strong: rgba(249, 115, 22, 0.28);
-  --accent-glow-soft: rgba(249, 115, 22, 0.07);
-}
-
-/* ── Base resets ── */
 *,
 *::before,
 *::after {
@@ -36,28 +36,21 @@
 }
 
 html {
-  background: #080808;
+  background: #252024;
 }
 
 body {
-  background-color: #080808;
-  color: #f5f5f5;
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  background-color: #252024;
+  color: #c7c7c5;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Dark scrollbar ── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a #080808;
+  scrollbar-color: #3c373b #252024;
 }
 
 *::-webkit-scrollbar {
@@ -66,32 +59,40 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #080808;
+  background: #252024;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #3c373b;
   border-radius: 3px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #f97316;
+  background: rgba(199, 199, 197, 0.4);
 }
 
-/* ── Selection ── */
 ::selection {
-  background: rgba(249, 115, 22, 0.25);
-  color: #f5f5f5;
+  background: rgba(199, 199, 197, 0.9);
+  color: #252024;
 }
 
-/* ── Focus ring override ── */
 :focus-visible {
-  outline: 2px solid rgba(249, 115, 22, 0.6);
+  outline: 2px solid rgba(199, 199, 197, 0.55);
   outline-offset: 2px;
 }
 
-/* ── Select element dark override ── */
 select option {
-  background: #1a1a1a;
-  color: #f5f5f5;
+  background: #2b272a;
+  color: #c7c7c5;
+}
+
+/* Honour reduced motion, disable all motion for users who ask for it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

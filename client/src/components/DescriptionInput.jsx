@@ -1,187 +1,194 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { toast } from "sonner";
+import { useState, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
+import { ArrowRight, RotateCcw } from 'lucide-react'
 
-const EXAMPLES = [
-  "I'm building a social media app with user auth and real-time notifications...",
-  "I need a SaaS dashboard with payments, user roles, and analytics...",
-  "I'm making an e-commerce store with inventory management...",
-  "I want a real-time chat app with file sharing...",
-];
-
-// Typewriter state machine — all in one object so the effect has one dep
-const INITIAL_TYPE_STATE = {
-  exampleIndex: 0,
-  charIndex: 0,
-  isDeleting: false,
-  isPaused: false,
-};
+const PLACEHOLDER =
+  'Describe what you’re building, its core features, and any constraints. The more detail you give, the sharper the stack.'
 
 export default function DescriptionInput({ onAnalyze, onReset, loading }) {
-  const [projectName, setProjectName] = useState("");
-  const [description, setDescription] = useState("");
-  const [placeholder, setPlaceholder] = useState("");
-  const [ts, setTs] = useState(INITIAL_TYPE_STATE); // typewriter state
+  const [projectName, setProjectName] = useState('')
+  const [description, setDescription] = useState('')
+  const [focused, setFocused] = useState(false)
+  const textareaRef = useRef(null)
 
-  // ── Typewriter effect ──────────────────────────────────────────────────────
-  useEffect(() => {
-    // Freeze typewriter while user is typing
-    if (description) return;
+  const charCount = description.length
+  const charWarn = charCount > 1800
+  const ready = description.trim().length >= 10
 
-    const { exampleIndex, charIndex, isDeleting, isPaused } = ts;
-    const current = EXAMPLES[exampleIndex];
-
-    // Pause phase — wait before starting to delete
-    if (isPaused) {
-      const t = setTimeout(() => {
-        setTs((s) => ({ ...s, isPaused: false, isDeleting: true }));
-      }, 2200);
-      return () => clearTimeout(t);
-    }
-
-    const delay = isDeleting ? 22 : 52;
-
-    const t = setTimeout(() => {
-      if (!isDeleting) {
-        if (charIndex < current.length) {
-          setPlaceholder(current.slice(0, charIndex + 1));
-          setTs((s) => ({ ...s, charIndex: s.charIndex + 1 }));
-        } else {
-          // Done typing enter pause phase
-          setTs((s) => ({ ...s, isPaused: true }));
-        }
-      } else {
-        if (charIndex > 0) {
-          setPlaceholder(current.slice(0, charIndex - 1));
-          setTs((s) => ({ ...s, charIndex: s.charIndex - 1 }));
-        } else {
-          // Done deleting advance to next example
-          setTs({
-            exampleIndex: (exampleIndex + 1) % EXAMPLES.length,
-            charIndex: 0,
-            isDeleting: false,
-            isPaused: false,
-          });
-        }
+  const handleSubmit = useCallback(
+    (e) => {
+      e?.preventDefault()
+      if (loading) return
+      if (!ready) {
+        toast.error('Add a little more detail (at least 10 characters).')
+        return
       }
-    }, delay);
+      onAnalyze({
+        description: description.trim(),
+        projectName: projectName.trim() || 'my-app',
+      })
+    },
+    [loading, ready, description, projectName, onAnalyze]
+  )
 
-    return () => clearTimeout(t);
-  }, [ts, description]);
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  const charCount = description.length;
-  const charWarn = charCount > 1800;
-  const descriptionReady = description.trim().length >= 10;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (loading) return;
-    if (!descriptionReady) {
-      toast.error("Description must be at least 10 characters.");
-      return;
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
     }
-    onAnalyze({
-      description: description.trim(),
-      projectName: projectName.trim() || "my-app",
-    });
-  };
+  }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const handleReset = () => {
+    setDescription('')
+    setProjectName('')
+    onReset?.()
+    textareaRef.current?.focus()
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut", delay: 0.25 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="w-full"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Project name */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold tracking-widest uppercase text-muted">
-            Project Name
-          </label>
-          <input
-            type="text"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="my-app"
-            maxLength={60}
-            className="w-full px-4 py-3 bg-surface border border-hairline rounded-md text-ink text-sm
-                       placeholder:text-faint
-                       focus:outline-none focus:border-accent
-                       transition-colors duration-200"
+      <form onSubmit={handleSubmit}>
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background: 'var(--color-surface)',
+            border: `1px solid ${
+              focused ? 'rgba(199,199,197,0.3)' : 'var(--color-hairline)'
+            }`,
+            boxShadow: focused
+              ? '0 0 0 4px rgba(199,199,197,0.05)'
+              : 'none',
+            transition: 'border-color 200ms ease, box-shadow 200ms ease',
+          }}
+        >
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value)
+              onReset?.()
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={PLACEHOLDER}
+            maxLength={2000}
+            rows={5}
+            className="w-full px-6 pt-6 pb-4 text-base leading-relaxed resize-none bg-transparent focus:outline-none"
+            style={{ color: 'var(--color-ink)', caretColor: '#c7c7c5' }}
           />
-        </div>
 
-        {/* Description */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold tracking-widest uppercase text-muted">
-            Project Description
-          </label>
-          <div className="relative">
-            <textarea
-              value={description}
-              onChange={(e) => { setDescription(e.target.value); onReset?.(); }}
-              placeholder={placeholder}
-              maxLength={2000}
-              rows={6}
-              className="w-full px-4 py-3 bg-surface border border-hairline rounded-md text-ink text-sm
-                         placeholder:text-faint
-                         focus:outline-none focus:border-accent
-                         transition-colors duration-200 resize-none leading-relaxed"
-            />
-            {/* Character counter */}
-            <span
-              className="absolute bottom-3 right-3 text-xs tabular-nums transition-colors duration-200"
-              style={{ color: charWarn ? "#f97316" : "#444444" }}
-            >
-              {charCount}/2000
-            </span>
+          {/* Toolbar */}
+          <div
+            className="flex items-center justify-between gap-4 px-4 py-3"
+            style={{ borderTop: '1px solid var(--color-hairline)' }}
+          >
+            {/* Left side, project name */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span
+                className="font-mono text-xs uppercase tracking-wider shrink-0"
+                style={{ color: 'var(--color-faint)' }}
+              >
+                name
+              </span>
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="my-app"
+                maxLength={60}
+                className="min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+                style={{ color: 'var(--color-ink)' }}
+              />
+            </div>
+
+            {/* Right side, count + actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className="font-mono text-xs tabular-nums mr-1"
+                style={{
+                  color: charWarn ? '#c7c7c5' : 'var(--color-faint)',
+                  transition: 'color 200ms ease',
+                }}
+              >
+                {charCount}/2000
+              </span>
+
+              {(description || projectName) && (
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={handleReset}
+                  title="Clear"
+                  className="flex items-center justify-center w-9 h-9 rounded-lg"
+                  style={{ color: 'var(--color-muted)' }}
+                  whileHover={{
+                    backgroundColor: 'var(--color-elevated)',
+                    color: '#c7c7c5',
+                  }}
+                >
+                  <RotateCcw size={15} strokeWidth={1.8} />
+                </motion.button>
+              )}
+
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileHover={!loading && ready ? { scale: 1.03 } : undefined}
+                whileTap={!loading && ready ? { scale: 0.97 } : undefined}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold"
+                style={{
+                  background: ready && !loading ? 'var(--color-cream)' : 'var(--color-elevated)',
+                  color: ready && !loading ? '#252024' : 'var(--color-faint)',
+                  cursor: loading ? 'not-allowed' : ready ? 'pointer' : 'default',
+                  transition: 'background-color 200ms ease, color 200ms ease',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Spinner />
+                    Analyzing
+                  </>
+                ) : (
+                  <>
+                    Analyze
+                    <ArrowRight size={15} strokeWidth={2} />
+                  </>
+                )}
+              </motion.button>
+            </div>
           </div>
         </div>
 
-        {/* Submit button */}
-        <div>
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileHover={!loading ? { scale: 1.015 } : undefined}
-            whileTap={!loading ? { scale: 0.975 } : undefined}
-            className="px-7 py-3 rounded-md text-sm font-semibold transition-shadow duration-200"
-            style={{
-              background: "#f97316",
-              color: "#080808",
-              opacity: loading ? 0.4 : descriptionReady ? 1 : 0.55,
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow:
-                descriptionReady && !loading
-                  ? "0 0 24px rgba(249, 115, 22, 0.35)"
-                  : "none",
-            }}
-          >
-            {loading ? (
-              <span className="flex items-center gap-2.5">
-                <Spinner />
-                Analyzing...
-              </span>
-            ) : (
-              "Analyze Stack →"
-            )}
-          </motion.button>
-        </div>
+        {/* Hint */}
+        <p
+          className="mt-3 px-1 font-mono text-xs"
+          style={{ color: 'var(--color-faint)' }}
+        >
+          Enter to analyze · Shift + Enter for a new line
+        </p>
       </form>
     </motion.div>
-  );
+  )
 }
 
-// Inline spinner — avoids an extra file
 function Spinner() {
   return (
     <motion.span
       animate={{ rotate: 360 }}
-      transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
-      className="inline-block w-4 h-4 border-2 rounded-full"
-      style={{ borderColor: "rgba(0,0,0,0.2)", borderTopColor: "#080808" }}
+      transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+      className="inline-block w-3.5 h-3.5 border-2 rounded-full"
+      style={{ borderColor: 'rgba(37,32,36,0.25)', borderTopColor: '#252024' }}
     />
-  );
+  )
 }

@@ -1,246 +1,213 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import DescriptionInput from "../components/DescriptionInput";
-import StackGrid from "../components/StackGrid";
-import HeroBackground from "../components/HeroBackground";
-import { useRecommend } from "../hooks/useRecommend";
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import DescriptionInput from '../components/DescriptionInput'
+import StackGrid from '../components/StackGrid'
+import ForgeBackground from '../components/ForgeBackground'
+import GithubIcon from '../components/GithubIcon'
+import { useRecommend } from '../hooks/useRecommend'
+
+const REPO = 'https://github.com/gabehusol/skapta'
 
 export default function Home() {
-  const { loading, error, recommendations, analyze, retry, reset } = useRecommend();
-  const [lastInput, setLastInput] = useState({ projectName: "my-app", description: "" });
+  const { loading, error, recommendations, analyze, retry, reset } = useRecommend()
+  const [lastInput, setLastInput] = useState({ projectName: 'my-app', description: '' })
 
   const handleAnalyze = ({ description, projectName }) => {
-    setLastInput({ description, projectName });
-    analyze(description);
-  };
+    setLastInput({ description, projectName })
+    analyze(description)
+  }
+
+  // Empty state gets a full viewport hero. Once work begins, the hero collapses
+  // so results sit close to the input instead of far below the fold.
+  const active = loading || !!recommendations || !!error
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#080808" }}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--color-bg)' }}>
 
-      {/* ── Nav — fixed, frosted glass ────────────────────────────────────── */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5"
-        style={{
-          background: "rgba(8,8,8,0.82)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(249,115,22,0.15)",
-        }}
-      >
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          whileHover={{ textShadow: "0 0 22px rgba(249,115,22,0.75)" }}
-          className="text-sm font-bold tracking-widest uppercase cursor-default select-none"
-          style={{ color: "#f97316", letterSpacing: "0.18em" }}
+      {/* Full-page animated forge background */}
+      <ForgeBackground />
+
+      {/* Top bar */}
+      <header className="relative z-20 flex items-center justify-between px-6 md:px-10 py-5">
+        <span
+          className="text-sm font-bold tracking-[0.22em] uppercase select-none"
+          style={{ color: 'var(--color-ink)' }}
         >
           Skapta
-        </motion.span>
-
+        </span>
         <motion.a
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          href="https://github.com/gabehusol/skapta"
+          href={REPO}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium"
-          style={{ color: "#666666" }}
-          whileHover={{ color: "#f5f5f5" }}
+          aria-label="GitHub repository"
+          className="flex items-center justify-center w-9 h-9 rounded-lg"
+          style={{ color: 'var(--color-muted)' }}
+          whileHover={{ color: '#c7c7c5', backgroundColor: 'var(--color-surface)' }}
+          transition={{ duration: 0.15 }}
         >
-          GitHub ↗
+          <GithubIcon size={18} />
         </motion.a>
-      </nav>
+      </header>
 
-      {/* Spacer that matches fixed nav height (py-5 × 2 + ~24px content ≈ 64px) */}
-      <div className="h-16 shrink-0" />
+      <main className="relative z-10 flex-1 flex flex-col">
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-6 pt-14 pb-10 text-center">
-        <HeroBackground />
-
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-          className="relative max-w-3xl mx-auto"
+        {/* Hero */}
+        <section
+          className={`relative flex items-center justify-center overflow-hidden transition-[min-height,padding] duration-500 ${
+            active ? 'min-h-0 pt-6 pb-2' : 'min-h-[86vh] pb-12'
+          }`}
         >
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.05 }}
-            className="text-xs font-semibold tracking-widest uppercase mb-5"
-            style={{ color: "#f97316" }}
-          >
-            AI Stack Architect
-          </motion.p>
+          {/* Hero content */}
+          <div className="relative z-10 w-full max-w-2xl mx-auto px-6 flex flex-col items-center text-center gap-8">
 
-          <h1
-            className="text-5xl md:text-6xl font-normal mb-5 leading-tight"
-            style={{
-              color: "#f5f5f5",
-              letterSpacing: "-0.65px",
-              fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-            }}
-          >
-            Describe your project.
-            <br />
-            <span style={{ color: "#f97316" }}>Get your stack.</span>
-          </h1>
+            {/* Headline (only in the idle hero state) */}
+            <AnimatePresence initial={false}>
+              {!active && (
+                <motion.div
+                  key="headline"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="flex flex-col items-center gap-5"
+                >
+                  <h1
+                    className="text-4xl md:text-6xl font-medium leading-[1.05]"
+                    style={{ color: 'var(--color-ink)', letterSpacing: '-0.02em' }}
+                  >
+                    Stop guessing
+                    <br />
+                    your tech stack.
+                  </h1>
+                  <p
+                    className="text-base md:text-lg max-w-md"
+                    style={{ color: 'var(--color-muted)', lineHeight: 1.6 }}
+                  >
+                    Tell Skapta what you are building. Get a reasoned stack and a
+                    configured, ready to run project in seconds.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <p
-            className="text-lg max-w-xl mx-auto"
-            style={{ color: "#666666", lineHeight: "1.7" }}
-          >
-            Tell us what you're building. Skapta recommends the right stack
-            with reasoning grounded in real documentation, then generates a
-            ready-to-run project ZIP.
-          </p>
-        </motion.div>
-      </section>
+            {/* Input */}
+            <div className="w-full text-left">
+              <DescriptionInput onAnalyze={handleAnalyze} onReset={reset} loading={loading} />
+            </div>
+          </div>
+        </section>
 
-      {/* ── Main content ──────────────────────────────────────────────────── */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-10 pb-8 flex flex-col gap-10">
+        {/* Results */}
+        <section className="relative z-10 w-full max-w-2xl mx-auto px-6 pb-20 flex flex-col gap-8">
 
-        <DescriptionInput onAnalyze={handleAnalyze} onReset={reset} loading={loading} />
-
-        {/* Error + retry */}
-        <AnimatePresence>
-          {error && !loading && !recommendations && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-between px-4 py-3 rounded-lg"
-              style={{ background: "#111111", border: "1px solid #2a2a2a" }}
-            >
-              <span className="text-sm" style={{ color: "#666666" }}>
-                Something went wrong.
-              </span>
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={retry}
-                className="text-xs font-semibold px-3 py-1.5 rounded-md"
+          {/* Error */}
+          <AnimatePresence>
+            {error && !loading && !recommendations && (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                className="flex items-center justify-between px-5 py-4 rounded-xl"
                 style={{
-                  background: "transparent",
-                  border: "1px solid rgba(249,115,22,0.35)",
-                  color: "#f97316",
-                  cursor: "pointer",
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-hairline)',
                 }}
               >
-                Try again
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <span className="text-sm" style={{ color: 'var(--color-muted)' }}>
+                  Something went wrong.
+                </span>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={retry}
+                  className="font-mono text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg"
+                  style={{
+                    border: '1px solid rgba(199,199,197,0.35)',
+                    color: 'var(--color-ink)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Retry
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Loading pulse */}
-        <AnimatePresence>
-          {loading && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center gap-4 py-6"
-            >
-              <div className="flex items-center gap-2">
-                {[0, 1, 2, 3].map((i) => (
+          {/* Loading, minimal indeterminate line */}
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                className="flex flex-col items-center gap-4 py-16"
+              >
+                <div
+                  className="w-full max-w-xs h-px overflow-hidden rounded-full"
+                  style={{ background: 'var(--color-hairline)' }}
+                >
                   <motion.div
-                    key={i}
-                    className="rounded-full"
-                    style={{ width: 7, height: 7, background: "#f97316" }}
-                    animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.1, 0.8] }}
-                    transition={{
-                      duration: 1.1,
-                      repeat: Infinity,
-                      delay: i * 0.18,
-                      ease: "easeInOut",
-                    }}
+                    className="h-full"
+                    style={{ width: '35%', background: 'var(--color-cream)' }}
+                    animate={{ x: ['-120%', '340%'] }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
                   />
-                ))}
-              </div>
-              <p className="text-sm text-muted">Analyzing your project...</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </div>
+                <span
+                  className="font-mono text-xs uppercase tracking-[0.18em]"
+                  style={{ color: 'var(--color-muted)' }}
+                >
+                  Analyzing
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Recommendations */}
-        <AnimatePresence>
-          {!loading && recommendations && (
-            <motion.div
-              key="recommendations"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <StackGrid
-                recommendations={recommendations}
-                projectName={lastInput.projectName}
-                description={lastInput.description}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+          {/* Recommendations */}
+          <AnimatePresence>
+            {!loading && recommendations && (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+              >
+                <StackGrid
+                  recommendations={recommendations}
+                  projectName={lastInput.projectName}
+                  description={lastInput.description}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
       </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
+      {/* Footer */}
       <footer
-        className="px-8 py-9 mt-auto"
-        style={{ borderTop: "1px solid rgba(249,115,22,0.10)" }}
+        className="relative z-10"
+        style={{ borderTop: '1px solid var(--color-hairline)' }}
       >
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-
-          {/* Left — logo + tagline */}
-          <div className="flex flex-col gap-1.5">
-            <span
-              className="text-xs font-bold tracking-widest uppercase"
-              style={{ color: "#f97316", letterSpacing: "0.18em" }}
-            >
-              Skapta
-            </span>
-            <span className="text-xs" style={{ color: "#444444" }}>
-              Describe your project. Get your stack.
-            </span>
-          </div>
-
-          {/* Centre — links */}
-          <div className="flex items-center gap-6">
-            <motion.a
-              href="https://github.com/gabehusol/skapta"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs"
-              style={{ color: "#555555" }}
-              whileHover={{ color: "#f5f5f5" }}
-            >
-              GitHub ↗
-            </motion.a>
-            <span className="text-xs" style={{ color: "#333333" }}>
-              Docs{" "}
-              <span style={{ color: "#2a2a2a" }}>(coming soon)</span>
-            </span>
-            <span className="text-xs" style={{ color: "#333333" }}>
-              Changelog{" "}
-              <span style={{ color: "#2a2a2a" }}>(coming soon)</span>
-            </span>
-          </div>
-
-          {/* Right — brag line */}
-          <span
-            className="text-xs font-medium"
-            style={{ color: "#2d2d2d" }}
-          >
-            Built with Skapta
+        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+          <span className="font-mono text-xs" style={{ color: 'var(--color-faint)' }}>
+            © 2026 Skapta
           </span>
-
+          <a
+            href={REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            className="transition-colors"
+            style={{ color: 'var(--color-faint)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#c7c7c5')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-faint)')}
+          >
+            <GithubIcon size={16} />
+          </a>
         </div>
       </footer>
-
     </div>
-  );
+  )
 }

@@ -19,7 +19,7 @@ export function useGenerate() {
       a.remove()
       window.URL.revokeObjectURL(url)
 
-      toast.success('Project downloaded — follow the README to get started.')
+      toast.success('Project downloaded. Follow the README to get started.')
     } catch (err) {
       const detail = await extractErrorDetail(err)
       if (detail) {
@@ -35,7 +35,7 @@ export function useGenerate() {
   return { loading, generate }
 }
 
-// The API streams a blob, so an error response body is also a Blob — read and parse it.
+// The API streams a blob, so an error response body is also a Blob. Read and parse it.
 async function extractErrorDetail(err) {
   const data = err?.response?.data
   if (!data) return null

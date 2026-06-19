@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Download } from 'lucide-react'
 import RecommendationCard from './RecommendationCard'
+import SectionLabel from './SectionLabel'
 import { cardVariants } from '../lib/variants'
 import { useGenerate } from '../hooks/useGenerate'
 
@@ -8,12 +10,7 @@ const MAIN_CATEGORIES = ['frontend', 'backend', 'database', 'auth', 'deployment'
 
 const containerVariants = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.09,
-      delayChildren: 0.05,
-    },
-  },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
 }
 
 export default function StackGrid({ recommendations, projectName, description }) {
@@ -25,20 +22,19 @@ export default function StackGrid({ recommendations, projectName, description })
   const { additional = [] } = recommendations
 
   const handleOverride = (category, value) => {
-    setOverrides(prev => ({ ...prev, [category]: value }))
+    setOverrides((prev) => ({ ...prev, [category]: value }))
   }
 
-  // When Next.js is the (effective) frontend, the project has built-in API routes and
-  // needs no separate backend — surface a "None" option on the backend card so the
-  // Next.js combo can be generated from the UI (previously required a direct API call).
   const effectiveFrontend = overrides.frontend ?? recommendations.frontend?.choice ?? ''
   const isNextFrontend = effectiveFrontend.toLowerCase().includes('next')
 
-  const cardData = cat => {
+  const cardData = (cat) => {
     const data = recommendations[cat]
     if (cat === 'backend' && isNextFrontend && data) {
       const alts = data.alternatives ?? []
-      const hasNone = data.choice?.toLowerCase() === 'none' || alts.some(a => a?.toLowerCase() === 'none')
+      const hasNone =
+        data.choice?.toLowerCase() === 'none' ||
+        alts.some((a) => a?.toLowerCase() === 'none')
       if (!hasNone) return { ...data, alternatives: ['None', ...alts] }
     }
     return data
@@ -57,25 +53,19 @@ export default function StackGrid({ recommendations, projectName, description })
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.25 }}
-      className="flex flex-col gap-10"
+      transition={{ duration: 0.3 }}
+      className="flex flex-col gap-8"
     >
-      {/* Section label */}
-      <div className="flex items-center gap-4">
-        <span className="text-xs font-semibold tracking-widest uppercase text-muted">
-          Recommended Stack
-        </span>
-        <div className="flex-1 h-px" style={{ background: '#1a1a1a' }} />
-      </div>
+      <SectionLabel>Recommended stack</SectionLabel>
 
-      {/* Cards grid */}
+      {/* Cards */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
-        {MAIN_CATEGORIES.map(cat =>
+        {MAIN_CATEGORIES.map((cat) =>
           recommendations[cat] ? (
             <RecommendationCard
               key={cat}
@@ -87,27 +77,30 @@ export default function StackGrid({ recommendations, projectName, description })
         )}
       </motion.div>
 
-      {/* Additional chips */}
+      {/* Also included */}
       {additional.length > 0 && (
         <motion.div
           variants={cardVariants}
           initial="hidden"
           animate="show"
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
           className="flex flex-col gap-3"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-muted">
-            Also Included
+          <span
+            className="font-mono text-xs uppercase tracking-[0.16em]"
+            style={{ color: 'var(--color-faint)' }}
+          >
+            also included
           </span>
           <div className="flex flex-wrap gap-2">
-            {additional.map(item => (
+            {additional.map((item) => (
               <span
                 key={item}
                 className="px-3 py-1.5 text-xs font-medium rounded-full"
                 style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #2a2a2a',
-                  color: '#aaaaaa',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-hairline)',
+                  color: 'var(--color-muted)',
                 }}
               >
                 {item}
@@ -117,54 +110,59 @@ export default function StackGrid({ recommendations, projectName, description })
         </motion.div>
       )}
 
-      {/* Divider */}
-      <div className="h-px" style={{ background: '#1a1a1a' }} />
-
-      {/* Generate CTA */}
+      {/* Generate, inverted solid-cream CTA */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.55 }}
-        className="flex flex-col items-stretch gap-3"
+        transition={{ delay: 0.45 }}
+        className="flex flex-col items-stretch gap-3 pt-2"
       >
         <motion.button
-          whileHover={!generating ? { scale: 1.01 } : undefined}
-          whileTap={!generating ? { scale: 0.985 } : undefined}
           onClick={handleGenerate}
           disabled={generating}
-          className="w-full py-4 rounded-md text-base font-semibold"
+          className="w-full py-4 rounded-xl text-base font-semibold flex items-center justify-center gap-2.5"
           style={{
-            background: '#f97316',
-            color: '#080808',
-            opacity: generating ? 0.55 : 1,
+            background: generating ? 'var(--color-elevated)' : 'var(--color-cream)',
+            color: generating ? 'var(--color-faint)' : '#252024',
             cursor: generating ? 'not-allowed' : 'pointer',
-            boxShadow: generating ? 'none' : '0 0 40px rgba(249,115,22,0.22)',
+            border: generating ? '1px solid var(--color-hairline)' : 'none',
+            transition: 'background-color 200ms ease, color 200ms ease',
           }}
+          whileHover={
+            !generating
+              ? { scale: 1.01, boxShadow: '0 12px 40px rgba(199,199,197,0.14)' }
+              : undefined
+          }
+          whileTap={!generating ? { scale: 0.99 } : undefined}
+          transition={{ type: 'spring', stiffness: 380, damping: 24 }}
         >
           {generating ? (
-            <span className="flex items-center justify-center gap-2.5">
-              <GeneratingSpinner />
-              Generating...
-            </span>
+            <>
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                className="inline-block w-4 h-4 border-2 rounded-full"
+                style={{
+                  borderColor: 'var(--color-hairline)',
+                  borderTopColor: 'var(--color-muted)',
+                }}
+              />
+              Generating project
+            </>
           ) : (
-            'Generate Project →'
+            <>
+              <Download size={17} strokeWidth={2} />
+              Generate project
+            </>
           )}
         </motion.button>
-        <p className="text-center text-xs text-faint">
-          Downloads a configured, ready-to-run project ZIP
+        <p
+          className="text-center font-mono text-xs"
+          style={{ color: 'var(--color-faint)' }}
+        >
+          downloads a configured, ready-to-run project ZIP
         </p>
       </motion.div>
     </motion.div>
-  )
-}
-
-function GeneratingSpinner() {
-  return (
-    <motion.span
-      animate={{ rotate: 360 }}
-      transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
-      className="inline-block w-4 h-4 border-2 rounded-full"
-      style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#080808' }}
-    />
   )
 }
