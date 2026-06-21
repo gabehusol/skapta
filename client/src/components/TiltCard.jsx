@@ -11,12 +11,12 @@ export default function TiltCard({ children, className = '', max = 8 }) {
   const my = useMotionValue(0)
 
   const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [max, -max]), {
-    stiffness: 150,
-    damping: 18,
+    stiffness: 120,
+    damping: 20,
   })
   const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-max, max]), {
-    stiffness: 150,
-    damping: 18,
+    stiffness: 120,
+    damping: 20,
   })
 
   const handleMove = (e) => {
@@ -40,7 +40,7 @@ export default function TiltCard({ children, className = '', max = 8 }) {
     >
       <motion.div
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.01 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         className={className}
       >

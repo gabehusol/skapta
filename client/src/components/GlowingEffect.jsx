@@ -112,17 +112,17 @@ const GlowingEffect = memo(function GlowingEffect({
                   var(--black),
                   var(--black) calc(25% / var(--repeating-conic-gradient-times))
                 )`
-              : `radial-gradient(circle, #ffce7a 10%, #ffce7a00 20%),
-                radial-gradient(circle at 40% 40%, #ff8a3d 5%, #ff8a3d00 15%),
-                radial-gradient(circle at 60% 60%, #ff6a18 10%, #ff6a1800 20%),
-                radial-gradient(circle at 40% 60%, #ff3d00 10%, #ff3d0000 20%),
+              : `radial-gradient(circle, var(--color-accent-soft) 10%, transparent 20%),
+                radial-gradient(circle at 40% 40%, var(--color-accent) 5%, transparent 15%),
+                radial-gradient(circle at 60% 60%, var(--color-accent-strong) 10%, transparent 20%),
+                radial-gradient(circle at 40% 60%, var(--color-accent-deep) 10%, transparent 20%),
                 repeating-conic-gradient(
                   from 236.84deg at 50% 50%,
-                  #ffce7a 0%,
-                  #ff8a3d calc(25% / var(--repeating-conic-gradient-times)),
-                  #ff6a18 calc(50% / var(--repeating-conic-gradient-times)),
-                  #ff3d00 calc(75% / var(--repeating-conic-gradient-times)),
-                  #ffce7a calc(100% / var(--repeating-conic-gradient-times))
+                  var(--color-accent-soft) 0%,
+                  var(--color-accent) calc(25% / var(--repeating-conic-gradient-times)),
+                  var(--color-accent-strong) calc(50% / var(--repeating-conic-gradient-times)),
+                  var(--color-accent-deep) calc(75% / var(--repeating-conic-gradient-times)),
+                  var(--color-accent-soft) calc(100% / var(--repeating-conic-gradient-times))
                 )`,
         }}
         className={cn(

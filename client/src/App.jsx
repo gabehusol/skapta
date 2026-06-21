@@ -2,6 +2,11 @@ import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import Lenis from 'lenis'
 import Home from './pages/Home'
+import AppearanceBar from './components/AppearanceBar'
+import { ThemeProvider } from './theme/ThemeContext'
+import { BackgroundProvider } from './theme/BackgroundContext'
+import { APPEARANCE_ENABLED } from './theme/config'
+import { setLenis } from './lib/scroll'
 
 function useSmoothScroll() {
   useEffect(() => {
@@ -9,12 +14,12 @@ function useSmoothScroll() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const lenis = new Lenis({
-      duration: 1.1,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: 0.09,
       smoothWheel: true,
       wheelMultiplier: 1,
-      touchMultiplier: 1.5,
+      touchMultiplier: 1.6,
     })
+    setLenis(lenis)
 
     let raf
     const loop = (time) => {
@@ -26,6 +31,7 @@ function useSmoothScroll() {
     return () => {
       cancelAnimationFrame(raf)
       lenis.destroy()
+      setLenis(null)
     }
   }, [])
 }
@@ -34,9 +40,11 @@ export default function App() {
   useSmoothScroll()
 
   return (
-    <>
-      <Home />
-      <Toaster
+    <ThemeProvider>
+      <BackgroundProvider>
+        <Home />
+        {APPEARANCE_ENABLED && <AppearanceBar />}
+        <Toaster
         position="bottom-right"
         toastOptions={{
           style: {
@@ -50,7 +58,8 @@ export default function App() {
             toast: 'rounded-xl',
           },
         }}
-      />
-    </>
+        />
+      </BackgroundProvider>
+    </ThemeProvider>
   )
 }

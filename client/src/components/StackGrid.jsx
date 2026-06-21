@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Download, Check } from 'lucide-react'
+import { Download } from 'lucide-react'
 import RecommendationCard from './RecommendationCard'
 import SectionHeader from './SectionHeader'
+import TiltCard from './TiltCard'
+import Toggle from './Toggle'
 import { cardVariants } from '../lib/variants'
 import { useGenerate } from '../hooks/useGenerate'
 
@@ -22,23 +24,37 @@ const containerVariants = {
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
 }
 
-const PANEL = { background: 'var(--color-surface)', border: '1px solid var(--color-hairline)' }
+// Reveal sections as they scroll into view.
+const reveal = {
+  initial: { opacity: 0, y: 22 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-12% 0px' },
+  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+}
 
 export default function StackGrid({ recommendations, projectName, description }) {
   const [overrides, setOverrides] = useState({})
+  const [excluded, setExcluded] = useState(() => new Set())
   const { loading: generating, generate } = useGenerate()
 
   if (!recommendations) return null
 
   const { additional = [] } = recommendations
-  const count = MAIN_CATEGORIES.filter((c) => recommendations[c]).length
-  const overrideCount = Object.keys(overrides).filter(
-    (k) => overrides[k] !== recommendations[k]?.choice
-  ).length
 
   const handleOverride = (category, value) => {
     setOverrides((prev) => ({ ...prev, [category]: value }))
   }
+
+  const toggleAdditional = (item) => {
+    setExcluded((prev) => {
+      const next = new Set(prev)
+      if (next.has(item)) next.delete(item)
+      else next.add(item)
+      return next
+    })
+  }
+
+  const includedAdditional = additional.filter((a) => !excluded.has(a))
 
   const effectiveFrontend = overrides.frontend ?? recommendations.frontend?.choice ?? ''
   const isNextFrontend = effectiveFrontend.toLowerCase().includes('next')
@@ -60,7 +76,7 @@ export default function StackGrid({ recommendations, projectName, description })
     for (const cat of MAIN_CATEGORIES) {
       stack[cat] = overrides[cat] ?? recommendations[cat]?.choice ?? ''
     }
-    stack.additional = additional
+    stack.additional = includedAdditional
     generate({ stack, projectName: projectName || 'my-app', description })
   }
 
@@ -73,18 +89,6 @@ export default function StackGrid({ recommendations, projectName, description })
       transition={{ duration: 0.3 }}
       className="flex flex-col gap-7"
     >
-      {/* Overview strip */}
-      <div className="grid grid-cols-3 rounded-2xl overflow-hidden" style={PANEL}>
-        <Stat label="Project" value={projectName || 'my-app'} />
-        <Stat label="Layers" value={String(count)} bordered />
-        <Stat
-          label={overrideCount > 0 ? 'Overrides' : 'Status'}
-          value={overrideCount > 0 ? `${overrideCount} swapped` : 'Ready'}
-          dot={overrideCount === 0}
-          bordered
-        />
-      </div>
-
       {/* Stack */}
       <section className="flex flex-col gap-4">
         <SectionHeader index="01" title="Recommended stack" meta="swap any before generating" />
@@ -110,32 +114,52 @@ export default function StackGrid({ recommendations, projectName, description })
 
       {/* Also included */}
       {additional.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <SectionHeader index="02" title="Also included" meta={`${additional.length} extras`} />
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-2xl p-5"
-            style={PANEL}
-          >
-            {additional.map((item) => (
-              <span
-                key={item}
-                className="flex items-center gap-2 text-sm"
-                style={{ color: 'var(--color-ink)' }}
-              >
-                <Check size={14} strokeWidth={2.4} style={{ color: 'var(--color-accent)' }} />
-                {item}
-              </span>
-            ))}
-          </div>
-        </section>
+        <motion.section {...reveal} className="flex flex-col gap-4">
+          <SectionHeader
+            index="02"
+            title="Also included"
+            meta={`${includedAdditional.length} of ${additional.length} on`}
+          />
+          <TiltCard max={3} className="glass-card grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-2xl p-3">
+            {additional.map((item) => {
+              const on = !excluded.has(item)
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={`Include ${item}`}
+                  onClick={() => toggleAdditional(item)}
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left"
+                  style={{ transition: 'background 150ms ease' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-elevated)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span
+                    className="text-sm truncate"
+                    style={{
+                      color: on ? 'var(--color-ink)' : 'var(--color-faint)',
+                      textDecoration: on ? 'none' : 'line-through',
+                      transition: 'color 150ms ease',
+                    }}
+                  >
+                    {item}
+                  </span>
+                  <Toggle on={on} />
+                </button>
+              )
+            })}
+          </TiltCard>
+        </motion.section>
       )}
 
       {/* Export */}
-      <section className="flex flex-col gap-4">
+      <motion.section {...reveal} className="flex flex-col gap-4">
         <SectionHeader index={exportIndex} title="Export" />
-        <div
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl p-5"
-          style={PANEL}
+        <TiltCard
+          max={3}
+          className="glass-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl p-5"
         >
           <div className="flex flex-col gap-1">
             <span
@@ -156,8 +180,8 @@ export default function StackGrid({ recommendations, projectName, description })
             style={{
               background: generating
                 ? 'var(--color-elevated)'
-                : 'linear-gradient(135deg, #ff8a3d 0%, #ff6a18 100%)',
-              color: generating ? 'var(--color-faint)' : '#211a14',
+                : 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%)',
+              color: generating ? 'var(--color-faint)' : 'var(--accent-contrast)',
               cursor: generating ? 'not-allowed' : 'pointer',
               border: generating ? '1px solid var(--color-hairline)' : 'none',
               fontFamily: 'var(--font-display)',
@@ -202,36 +226,8 @@ export default function StackGrid({ recommendations, projectName, description })
               </>
             )}
           </motion.button>
-        </div>
-      </section>
+        </TiltCard>
+      </motion.section>
     </motion.div>
-  )
-}
-
-function Stat({ label, value, bordered, dot }) {
-  return (
-    <div
-      className="flex flex-col gap-1 px-4 sm:px-5 py-4 min-w-0"
-      style={{ borderLeft: bordered ? '1px solid var(--color-hairline)' : 'none' }}
-    >
-      <span
-        className="font-mono text-[10px] uppercase tracking-wider"
-        style={{ color: 'var(--color-faint)' }}
-      >
-        {label}
-      </span>
-      <span
-        className="flex items-center gap-2 text-base font-semibold truncate"
-        style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
-      >
-        {dot && (
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ background: 'var(--color-accent)', boxShadow: '0 0 8px rgba(var(--accent-rgb),0.8)' }}
-          />
-        )}
-        <span className="truncate">{value}</span>
-      </span>
-    </div>
   )
 }

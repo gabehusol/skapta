@@ -21,9 +21,11 @@
   /* Light fill (inverted primary button) */
   --color-cream: #c7c7c5;
 
-  /* Ember accent */
+  /* Accent (themeable, defaults to ember). Overridden at runtime by the theme ticker. */
   --color-accent: #ff8a3d;
   --color-accent-soft: #ffb37a;
+  --color-accent-strong: #ff6a18;
+  --color-accent-deep: #ff3d00;
 
   /* Fonts */
   --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -34,6 +36,7 @@
 
 :root {
   --accent-rgb: 255, 138, 61;
+  --accent-contrast: #211a14;
   --ink-rgb: 199, 199, 197;
 }
 

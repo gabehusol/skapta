@@ -25,7 +25,7 @@ export default function RecommendationCard({ category, data, onOverride, classNa
   return (
     <motion.div variants={cardVariants} className={`h-full ${className}`}>
       <TiltCard
-        max={9}
+        max={4}
         className="glass-card relative flex flex-col gap-4 h-full rounded-2xl p-5 md:p-6 overflow-hidden"
       >
         {/* Override accent bar */}
@@ -37,7 +37,7 @@ export default function RecommendationCard({ category, data, onOverride, classNa
         />
 
         {/* Icon + category (popped forward in 3D) */}
-        <div className="flex items-center justify-between gap-3" style={{ transform: 'translateZ(40px)' }}>
+        <div className="flex items-center justify-between gap-3" style={{ transform: 'translateZ(16px)' }}>
           <span
             className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
             style={{
@@ -57,7 +57,7 @@ export default function RecommendationCard({ category, data, onOverride, classNa
         </div>
 
         {/* Choice */}
-        <div className="flex items-baseline gap-2 flex-wrap" style={{ transform: 'translateZ(28px)' }}>
+        <div className="flex items-baseline gap-2 flex-wrap" style={{ transform: 'translateZ(11px)' }}>
           <h3
             className="text-2xl font-semibold leading-tight"
             style={{
@@ -87,14 +87,14 @@ export default function RecommendationCard({ category, data, onOverride, classNa
         {/* Reason */}
         <p
           className="text-sm leading-relaxed flex-1"
-          style={{ color: 'var(--color-muted)', transform: 'translateZ(16px)' }}
+          style={{ color: 'var(--color-muted)', transform: 'translateZ(6px)' }}
         >
           {data.reason}
         </p>
 
         {/* Swap select */}
         {data.alternatives?.length > 0 && (
-          <div className="relative mt-1" style={{ transform: 'translateZ(24px)' }}>
+          <div className="relative mt-1" style={{ transform: 'translateZ(9px)' }}>
             <select
               value={selected}
               onChange={handleChange}

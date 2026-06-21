@@ -197,9 +197,9 @@ export default function DescriptionInput({ onAnalyze, onReset, loading }) {
                 style={{
                   background:
                     ready && !loading
-                      ? 'linear-gradient(135deg, #ff8a3d 0%, #ff6a18 100%)'
+                      ? 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%)'
                       : 'var(--color-elevated)',
-                  color: ready && !loading ? '#211a14' : 'var(--color-faint)',
+                  color: ready && !loading ? 'var(--accent-contrast)' : 'var(--color-faint)',
                   cursor: loading ? 'not-allowed' : ready ? 'pointer' : 'default',
                   boxShadow: ready && !loading ? '0 0 24px rgba(var(--accent-rgb),0.35)' : 'none',
                   border: ready && !loading ? 'none' : '1px solid var(--color-hairline)',
@@ -224,7 +224,7 @@ export default function DescriptionInput({ onAnalyze, onReset, loading }) {
 
         {/* Hint */}
         <p className="mt-3 px-1 font-mono text-xs" style={{ color: 'var(--color-faint)' }}>
-          Enter to generate · Shift + Enter for a new line
+          Shift + Enter for a new line
         </p>
       </form>
     </motion.div>
@@ -237,7 +237,7 @@ function Spinner() {
       animate={{ rotate: 360 }}
       transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
       className="inline-block w-3.5 h-3.5 border-2 rounded-full"
-      style={{ borderColor: 'rgba(33,26,20,0.3)', borderTopColor: '#211a14' }}
+      style={{ borderColor: 'rgba(0,0,0,0.28)', borderTopColor: 'var(--accent-contrast)' }}
     />
   )
 }
