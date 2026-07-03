@@ -20,7 +20,7 @@ export default function AppearanceBar() {
       {/* Background row */}
       <div className="flex items-center gap-3">
         <span
-          className="w-[68px] shrink-0 font-mono text-[10px] uppercase tracking-[0.14em]"
+          className="w-[68px] shrink-0 font-mono text-[10px]"
           style={{ color: 'var(--color-faint)' }}
         >
           Background
@@ -53,7 +53,7 @@ export default function AppearanceBar() {
       {/* Theme row */}
       <div className="flex items-center gap-3">
         <span
-          className="w-[68px] shrink-0 font-mono text-[10px] uppercase tracking-[0.14em]"
+          className="w-[68px] shrink-0 font-mono text-[10px]"
           style={{ color: 'var(--color-faint)' }}
         >
           Theme

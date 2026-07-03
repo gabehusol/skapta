@@ -49,7 +49,7 @@ export default function RecommendationCard({ category, data, onOverride, classNa
             <Icon size={18} strokeWidth={1.8} />
           </span>
           <span
-            className="font-mono text-[11px] uppercase tracking-[0.16em]"
+            className="font-mono text-[11px]"
             style={{ color: 'var(--color-faint)' }}
           >
             {category}
@@ -73,7 +73,7 @@ export default function RecommendationCard({ category, data, onOverride, classNa
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.15 }}
-              className="font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full"
+              className="font-mono text-[10px] px-2 py-0.5 rounded-full"
               style={{
                 color: 'var(--color-accent)',
                 border: '1px solid rgba(var(--accent-rgb), 0.4)',

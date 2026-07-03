@@ -217,7 +217,7 @@ export const SCHEMES = [
   },
 ]
 
-export const DEFAULT_SCHEME_ID = 'ember'
+export const DEFAULT_SCHEME_ID = 'steel'
 
 /** Write a scheme's accent variables onto the document root. */
 export function applyScheme(scheme) {

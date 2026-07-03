@@ -149,7 +149,7 @@ export default function DescriptionInput({ onAnalyze, onReset, loading }) {
                 }}
               >
                 <span
-                  className="font-mono text-[11px] uppercase tracking-wider shrink-0"
+                  className="font-mono text-[11px] shrink-0"
                   style={{ color: 'var(--color-faint)' }}
                 >
                   name
@@ -190,10 +190,14 @@ export default function DescriptionInput({ onAnalyze, onReset, loading }) {
               <motion.button
                 type="submit"
                 disabled={loading}
-                whileHover={!loading && ready ? { scale: 1.03 } : undefined}
-                whileTap={!loading && ready ? { scale: 0.97 } : undefined}
-                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold shrink-0"
+                whileHover={
+                  !loading && ready
+                    ? { scale: 1.02, boxShadow: '0 12px 40px rgba(var(--accent-rgb),0.4)' }
+                    : undefined
+                }
+                whileTap={!loading && ready ? { scale: 0.98 } : undefined}
+                transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+                className="relative overflow-hidden flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold shrink-0"
                 style={{
                   background:
                     ready && !loading
@@ -201,11 +205,24 @@ export default function DescriptionInput({ onAnalyze, onReset, loading }) {
                       : 'var(--color-elevated)',
                   color: ready && !loading ? 'var(--accent-contrast)' : 'var(--color-faint)',
                   cursor: loading ? 'not-allowed' : ready ? 'pointer' : 'default',
-                  boxShadow: ready && !loading ? '0 0 24px rgba(var(--accent-rgb),0.35)' : 'none',
                   border: ready && !loading ? 'none' : '1px solid var(--color-hairline)',
                   transition: 'background 200ms ease, color 200ms ease, box-shadow 200ms ease',
                 }}
               >
+                {ready && !loading && (
+                  <motion.span
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.28) 50%, transparent 70%)',
+                      backgroundSize: '200% 100%',
+                    }}
+                    initial={{ backgroundPosition: '200% center' }}
+                    whileHover={{ backgroundPosition: '-200% center' }}
+                    transition={{ duration: 0.7, ease: 'easeInOut' }}
+                  />
+                )}
+
                 {loading ? (
                   <>
                     <Spinner />

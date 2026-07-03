@@ -4,7 +4,6 @@ import {
   Swirl,
   GrainGradient,
   MeshGradient,
-  DotOrbit,
 } from '@paper-design/shaders-react'
 import { useTheme } from '../theme/ThemeContext'
 import { useBackground } from '../theme/BackgroundContext'
@@ -22,8 +21,6 @@ function renderBackground(id, colors) {
       return <GrainGradient style={fill} colors={colors} colorBack={BACK} speed={0.6} />
     case 'mesh':
       return <MeshGradient style={fill} colors={colors} speed={0.4} />
-    case 'dots':
-      return <DotOrbit style={fill} colors={colors} colorBack={BACK} speed={0.6} />
     case 'none':
       return null
     case 'metaballs':

@@ -42,7 +42,7 @@ export default function Home() {
     >
       <ForgeBackground />
 
-      {/* Top bar */}
+      {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ export default function Home() {
         style={{ borderBottom: '1px solid var(--color-hairline)' }}
       >
         <span
-          className="text-sm font-bold tracking-[0.22em] uppercase select-none text-glow"
+          className="text-base font-bold select-none"
           style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
         >
           Skapta
@@ -141,27 +141,6 @@ export default function Home() {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10" style={{ borderTop: '1px solid var(--color-hairline)' }}>
-        <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
-          <span className="font-mono text-xs" style={{ color: 'var(--color-faint)' }}>
-            © 2026 Skapta
-          </span>
-          <a
-            href={REPO}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub repository"
-            className="transition-colors"
-            style={{ color: 'var(--color-faint)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#c7c7c5')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-faint)')}
-          >
-            <GithubIcon size={16} />
-          </a>
-        </div>
-      </footer>
-
       {/* Clearance so the floating appearance bar never covers content */}
       {APPEARANCE_ENABLED && <div aria-hidden="true" className="h-28 shrink-0" />}
     </div>
@@ -197,7 +176,7 @@ function LoadingCanvas() {
           />
         </div>
         <span
-          className="font-mono text-xs uppercase tracking-[0.18em]"
+          className="font-mono text-xs"
           style={{ color: 'var(--color-muted)' }}
         >
           Generating
@@ -218,7 +197,7 @@ function ErrorCanvas({ onRetry }) {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={onRetry}
-          className="font-mono text-xs uppercase tracking-wider px-4 py-2 rounded-lg"
+          className="font-mono text-xs px-4 py-2 rounded-lg"
           style={{
             border: '1px solid rgba(var(--accent-rgb),0.4)',
             color: 'var(--color-accent)',

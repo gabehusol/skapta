@@ -6,8 +6,7 @@ export const BACKGROUNDS = [
   { id: 'swirl', name: 'Swirl' },
   { id: 'grain', name: 'Grain' },
   { id: 'mesh', name: 'Mesh' },
-  { id: 'dots', name: 'Dots' },
   { id: 'none', name: 'None' },
 ]
 
-export const DEFAULT_BACKGROUND_ID = 'metaballs'
+export const DEFAULT_BACKGROUND_ID = 'grain'
