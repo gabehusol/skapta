@@ -79,6 +79,41 @@ def parse_llm_response(raw: str) -> dict:
     return json.loads(raw.strip())
 
 
+CORE_CATEGORIES = ["frontend", "backend", "database", "auth", "deployment"]
+
+
+def validate_recommendations(result: dict) -> dict:
+    #Clamp the LLM output to supported options so a hallucinated or off-list
+    #choice can never reach the project generator.
+    recs = result.get("recommendations", {})
+
+    for cat in CORE_CATEGORIES:
+        supported = SUPPORTED_OPTIONS[cat]
+        entry = recs.get(cat) or {}
+
+        choice = entry.get("choice", "")
+        if choice not in supported:
+            #keep the model's reasoning but coerce to a supported default
+            choice = supported[0]
+        entry["choice"] = choice
+        entry.setdefault("reason", "")
+
+        #alternatives must be supported and exclude the chosen option
+        alts = [a for a in entry.get("alternatives", []) if a in supported and a != choice]
+        if not alts:
+            alts = [o for o in supported if o != choice][:2]
+        entry["alternatives"] = alts
+
+        recs[cat] = entry
+
+    #additional add-ons must be from the supported list
+    add_supported = SUPPORTED_OPTIONS["additional"]
+    recs["additional"] = [a for a in recs.get("additional", []) if a in add_supported]
+
+    result["recommendations"] = recs
+    return result
+
+
 def recommend(description: str) -> dict:
     #get pinecone top 20
     results = search(description)
@@ -100,6 +135,8 @@ def recommend(description: str) -> dict:
         model=GROQ_MODEL,
         temperature=TEMPERATURE,
         max_tokens=MAX_TOKENS,
+        #force valid JSON output instead of relying on markdown-fence stripping
+        model_kwargs={"response_format": {"type": "json_object"}},
     )
 
     messages = [
@@ -114,6 +151,9 @@ def recommend(description: str) -> dict:
         result = parse_llm_response(response.content)
     except json.JSONDecodeError as e:
         raise ValueError(f"LLM returned invalid JSON: {e}\nRaw response: {response.content}")
+
+    #Clamp choices to supported options before anything downstream uses them
+    result = validate_recommendations(result)
 
     # Build retrieved_sources from actual reranked chunks (not LLM-generated)
     seen = set()
