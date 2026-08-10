@@ -22,12 +22,18 @@ def embed_query(query: str) -> list[float]:
     embedding = _get_model().encode(query)
     return embedding.tolist()
 
+
+#reuse a single Pinecone client/index handle instead of building one per request
+@lru_cache(maxsize=1)
+def _get_index():
+    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    return pc.Index(os.getenv("PINECONE_INDEX_NAME"))
+
+
 #embeds query and searches pinecone for top k most similar
 def search(query: str, top_k: int = 20) -> list[dict]:
     vector = embed_query(query)
-
-    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-    index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
+    index = _get_index()
 
     response = index.query(
         vector=vector,
