@@ -12,7 +12,7 @@ def load_reranker() -> CrossEncoder:
     return CrossEncoder(MODEL_NAME)
 
 #use cross encoder for reranking pinecone results, group by tech
-def rerank(query: str, results: list[dict], top_n: int = 5) -> list[dict]:
+def rerank(query: str, results: list[dict], top_n: int = 3) -> list[dict]:
     reranker = load_reranker()
 
     pairs = [[query, r["text"]] for r in results]
