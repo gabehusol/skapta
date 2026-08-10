@@ -14,6 +14,11 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 TEMPERATURE = 0.2
 MAX_TOKENS = 2000
 
+#How much of each retrieved chunk to include in the prompt. Chunks are ~2000
+#chars; balanced retrieval keeps the total context reasonable, so we can afford
+#to pass a fuller excerpt than the old 500-char slice.
+CHUNK_CHARS = 900
+
 #all valid choices the LLM can rec
 SUPPORTED_OPTIONS = {
     "frontend": ["React + Vite", "Next.js", "Vue + Vite"],
@@ -58,8 +63,7 @@ Respond ONLY with valid JSON matching this exact schema — no text outside the 
 def build_context(chunks: list[dict]) -> str:
     lines = []
     for chunk in chunks:
-        #truncate each chunk to 500 chars to keep the prompt from getting too long
-        lines.append(f"[{chunk['technology']}] {chunk['text'][:500]}")
+        lines.append(f"[{chunk['technology']}] {chunk['text'][:CHUNK_CHARS]}")
     return "\n\n".join(lines)
 
 
