@@ -17,7 +17,7 @@ export function useRecommend() {
       const { data } = await getRecommendations(description)
       setRecommendations(data.recommendations)
       toast.success('Stack recommendations ready')
-    } catch (err) {
+    } catch {
       setError(true)
       toast.error('Something went wrong. Please try again.')
     } finally {

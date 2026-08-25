@@ -1,5 +1,4 @@
-import { useTheme } from '../theme/ThemeContext'
-import { useBackground } from '../theme/BackgroundContext'
+import { useTheme, useBackground } from '../theme/hooks'
 
 /** Floating appearance control: pick a background and an accent scheme. */
 export default function AppearanceBar() {

@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BACKGROUNDS, DEFAULT_BACKGROUND_ID } from './backgrounds'
 import { APPEARANCE_ENABLED, FORCED_BACKGROUND_ID } from './config'
+import { BackgroundContext } from './contexts'
 
-const BackgroundContext = createContext(null)
 const STORAGE_KEY = 'skapta-bg'
 
 export function BackgroundProvider({ children }) {
@@ -21,10 +21,4 @@ export function BackgroundProvider({ children }) {
       {children}
     </BackgroundContext.Provider>
   )
-}
-
-export function useBackground() {
-  const ctx = useContext(BackgroundContext)
-  if (!ctx) throw new Error('useBackground must be used within BackgroundProvider')
-  return ctx
 }

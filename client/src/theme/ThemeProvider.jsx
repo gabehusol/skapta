@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SCHEMES, DEFAULT_SCHEME_ID, applyScheme } from './schemes'
 import { APPEARANCE_ENABLED, FORCED_SCHEME_ID } from './config'
-
-const ThemeContext = createContext(null)
+import { ThemeContext } from './contexts'
 
 const STORAGE_KEY = 'skapta-scheme'
 
@@ -27,10 +26,4 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider')
-  return ctx
 }

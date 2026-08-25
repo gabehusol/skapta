@@ -5,7 +5,6 @@ import RecommendationCard from './RecommendationCard'
 import SectionHeader from './SectionHeader'
 import TiltCard from './TiltCard'
 import Toggle from './Toggle'
-import { cardVariants } from '../lib/variants'
 import { useGenerate } from '../hooks/useGenerate'
 
 const MAIN_CATEGORIES = ['frontend', 'backend', 'database', 'auth', 'deployment']
