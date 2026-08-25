@@ -50,12 +50,15 @@ export default function Home() {
         className="relative z-20 flex items-center justify-between px-6 md:px-10 py-5"
         style={{ borderBottom: '1px solid var(--color-hairline)' }}
       >
-        <span
-          className="text-base font-bold select-none"
-          style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
-        >
-          Skapta
-        </span>
+        <div className="flex items-center gap-2.5 select-none">
+          <img src="/logo.png" alt="" aria-hidden="true" className="w-7 h-7" />
+          <span
+            className="text-base font-bold"
+            style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
+          >
+            Skapta
+          </span>
+        </div>
         <motion.a
           href={REPO}
           target="_blank"

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="client/public/logo.png" width="120" alt="Skapta" />
+
 # Skapta
 
 **Describe your project. Get the right stack, and a codebase that already runs.**
@@ -24,9 +26,10 @@ outdated blog posts or a confident LLM inventing APIs that don't exist.
 
 Skapta does two things, and keeps them strictly separated:
 
-**1. Recommend.** A RAG pipeline retrieves real documentation for 17 technologies, reranks it
-per technology, and asks an LLM to pick a stack from a fixed menu, with a reason and
-alternatives for every layer plus the doc sources it actually read.
+**1. Recommend.** A RAG pipeline retrieves real documentation for 17 technologies, one filtered
+query per stack category, reranks it per technology, and asks an LLM to pick a stack from a
+fixed menu, with a reason and alternatives for every layer plus the doc sources it actually
+read.
 
 **2. Generate.** A deterministic engine assembles hand-written, compile-tested snippets into a
 working monorepo: client, server, auth guards, database layer, Docker and deploy config,
@@ -103,7 +106,7 @@ rather than emitting a project that won't build.
 
 | Endpoint | Rate limit | Description |
 |---|---|---|
-| `GET /api/health` | none | Liveness probe |
+| `GET /api/health` | none | Liveness, plus whether the Groq and Pinecone keys are configured |
 | `POST /api/recommend` | 5/min, 50/day | Description to grounded stack recommendation |
 | `POST /api/generate` | 20/min, 200/day | Stack to streamed project ZIP |
 
@@ -120,12 +123,17 @@ docs makes the reasoning auditable and lets the index be updated without touchin
 **The model picks from a closed menu.** `SUPPORTED_OPTIONS` enumerates every legal choice and
 is injected into the prompt, so "recommended" and "buildable" are the same set by
 construction. A recommendation the generator can't build is worse than none: the user gets
-excited about a stack, clicks Generate, and hits a wall.
+excited about a stack, clicks Generate, and hits a wall. The prompt asks for it and
+`validate_recommendations()` enforces it, clamping any off-list choice back to a supported
+one before the generator ever sees it, because a prompt rule is a request and a clamp is a
+guarantee.
 
-**Rerank, then group per technology.** Raw vector similarity is a popularity contest decided
-by documentation volume. A flat top-20 for "real-time chat app" can be twenty Socket.io
-chunks, and the model never sees a word about the database it's being asked to choose.
-Grouping guarantees every candidate reaches the prompt with its own strongest evidence.
+**Balanced retrieval, then rerank.** Raw vector similarity is a popularity contest decided by
+documentation volume. A flat top-k for "real-time chat app" comes back as mostly Socket.io
+chunks, and the model never sees a word about the database it's being asked to choose. So
+retrieval runs one filtered query per stack category and the cross-encoder reranks within
+each technology, which guarantees every category reaches the prompt grounded in its own
+strongest evidence.
 
 **Citations are assembled server-side.** The schema handed to the LLM contains only
 `recommendations`. The sources come from the chunks that were actually retrieved, so a
