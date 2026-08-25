@@ -9,6 +9,18 @@ load_dotenv()
 
 MODEL_NAME = "all-mpnet-base-v2"
 
+# Technologies in the corpus grouped by the stack category they belong to.
+# Retrieval runs one filtered query per category so every category is grounded,
+# even when the prompt is dominated by a single topic (e.g. "websockets").
+CATEGORY_TECHNOLOGIES = {
+    "frontend": ["React", "Next.js", "Vue"],
+    "backend": ["Express", "FastAPI", "Django"],
+    "database": ["PostgreSQL", "MongoDB", "Supabase"],
+    "auth": ["Auth0", "NextAuth", "Firebase", "Supabase"],
+    "deployment": ["Vercel", "Railway", "Docker"],
+    "additional": ["Docker", "Socket.io", "Stripe"],
+}
+
 
 #load the embedding model once and reuse it (loading per request is slow and
 #spikes RAM — see DEPLOY.md §1)
@@ -22,25 +34,42 @@ def embed_query(query: str) -> list[float]:
     embedding = _get_model().encode(query)
     return embedding.tolist()
 
-#embeds query and searches pinecone for top k most similar
-def search(query: str, top_k: int = 20) -> list[dict]:
-    vector = embed_query(query)
 
+#reuse a single Pinecone client/index handle instead of building one per request
+@lru_cache(maxsize=1)
+def _get_index():
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-    index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
+    return pc.Index(os.getenv("PINECONE_INDEX_NAME"))
 
-    response = index.query(
-        vector=vector,
-        top_k=top_k,
-        include_metadata=True
-    )
+
+def _match_to_dict(match) -> dict:
+    return {
+        "text": match.metadata["text"],
+        "technology": match.metadata["technology"],
+        "source_url": match.metadata["source_url"],
+        "score": match.score,
+    }
+
+
+#Balanced retrieval: run one filtered query per stack category so each category
+#is grounded, then let the reranker pick the best chunks per technology.
+def search(query: str, per_category: int = 8) -> list[dict]:
+    vector = embed_query(query)
+    index = _get_index()
 
     results = []
-    for match in response.matches:
-        results.append({
-            "text": match.metadata["text"],
-            "technology": match.metadata["technology"],
-            "source_url": match.metadata["source_url"],
-            "score": match.score,
-        })
+    seen_ids = set()
+    for technologies in CATEGORY_TECHNOLOGIES.values():
+        response = index.query(
+            vector=vector,
+            top_k=per_category,
+            include_metadata=True,
+            filter={"technology": {"$in": technologies}},
+        )
+        for match in response.matches:
+            if match.id in seen_ids:
+                continue
+            seen_ids.add(match.id)
+            results.append(_match_to_dict(match))
+
     return results

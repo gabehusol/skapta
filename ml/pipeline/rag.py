@@ -14,6 +14,11 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 TEMPERATURE = 0.2
 MAX_TOKENS = 2000
 
+#How much of each retrieved chunk to include in the prompt. Chunks are ~2000
+#chars; balanced retrieval keeps the total context reasonable, so we can afford
+#to pass a fuller excerpt than the old 500-char slice.
+CHUNK_CHARS = 900
+
 #all valid choices the LLM can rec
 SUPPORTED_OPTIONS = {
     "frontend": ["React + Vite", "Next.js", "Vue + Vite"],
@@ -36,19 +41,25 @@ RESPONSE_SCHEMA = {
     }
 }
 
-SYSTEM_PROMPT = """You are Skapta, an expert software architect. You recommend tech stacks based on project descriptions.
+SYSTEM_PROMPT = """You are Skapta, an expert software architect. Recommend a complete tech stack for the user's project.
 
-Only recommend from these supported options:
+Rules:
+- Choose every field ONLY from these supported options:
 {supported_options}
+- Base each choice on the specific needs in the description (scale, real-time, SEO/SSR, payments, ML, file uploads, auth complexity, etc.).
+- Ground your reasoning in the documentation excerpts below when relevant; prefer options whose docs fit the project's needs.
+- Each "reason" must be one or two sentences tied to the project's actual requirements, not generic filler.
+- "alternatives" must be one or two other supported options for that category, excluding the chosen one.
+- "additional" should only include add-ons the project genuinely needs.
 
-Use these as strong defaults, but use judgment based on the project description:
+Strong defaults (apply judgment based on the description):
 - If database is Supabase and auth requirements are simple, prefer Supabase Auth — it integrates natively and reduces complexity
 - If database is Supabase but the project needs enterprise auth, social login at scale, or complex roles, Auth0 may be better
 - If frontend is Next.js, prefer NextAuth unless Supabase Auth is the better fit
 - If the app needs a persistent database, prefer Railway over Vercel for deployment
 - If the app needs real-time features (chat, notifications, live updates), include Socket.io in additional
 
-You have access to these documentation excerpts to ground your recommendations:
+Documentation excerpts:
 {retrieved_chunks}
 
 Respond ONLY with valid JSON matching this exact schema — no text outside the JSON, no markdown fences:
@@ -58,8 +69,7 @@ Respond ONLY with valid JSON matching this exact schema — no text outside the 
 def build_context(chunks: list[dict]) -> str:
     lines = []
     for chunk in chunks:
-        #truncate each chunk to 500 chars to keep the prompt from getting too long
-        lines.append(f"[{chunk['technology']}] {chunk['text'][:500]}")
+        lines.append(f"[{chunk['technology']}] {chunk['text'][:CHUNK_CHARS]}")
     return "\n\n".join(lines)
 
 
@@ -73,6 +83,41 @@ def parse_llm_response(raw: str) -> dict:
         #strip closing
         raw = raw.split("```")[0]
     return json.loads(raw.strip())
+
+
+CORE_CATEGORIES = ["frontend", "backend", "database", "auth", "deployment"]
+
+
+def validate_recommendations(result: dict) -> dict:
+    #Clamp the LLM output to supported options so a hallucinated or off-list
+    #choice can never reach the project generator.
+    recs = result.get("recommendations", {})
+
+    for cat in CORE_CATEGORIES:
+        supported = SUPPORTED_OPTIONS[cat]
+        entry = recs.get(cat) or {}
+
+        choice = entry.get("choice", "")
+        if choice not in supported:
+            #keep the model's reasoning but coerce to a supported default
+            choice = supported[0]
+        entry["choice"] = choice
+        entry.setdefault("reason", "")
+
+        #alternatives must be supported and exclude the chosen option
+        alts = [a for a in entry.get("alternatives", []) if a in supported and a != choice]
+        if not alts:
+            alts = [o for o in supported if o != choice][:2]
+        entry["alternatives"] = alts
+
+        recs[cat] = entry
+
+    #additional add-ons must be from the supported list
+    add_supported = SUPPORTED_OPTIONS["additional"]
+    recs["additional"] = [a for a in recs.get("additional", []) if a in add_supported]
+
+    result["recommendations"] = recs
+    return result
 
 
 def recommend(description: str) -> dict:
@@ -96,6 +141,8 @@ def recommend(description: str) -> dict:
         model=GROQ_MODEL,
         temperature=TEMPERATURE,
         max_tokens=MAX_TOKENS,
+        #force valid JSON output instead of relying on markdown-fence stripping
+        model_kwargs={"response_format": {"type": "json_object"}},
     )
 
     messages = [
@@ -110,6 +157,9 @@ def recommend(description: str) -> dict:
         result = parse_llm_response(response.content)
     except json.JSONDecodeError as e:
         raise ValueError(f"LLM returned invalid JSON: {e}\nRaw response: {response.content}")
+
+    #Clamp choices to supported options before anything downstream uses them
+    result = validate_recommendations(result)
 
     # Build retrieved_sources from actual reranked chunks (not LLM-generated)
     seen = set()
