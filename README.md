@@ -2,7 +2,7 @@
 
 <img src="client/public/logo.png" width="120" alt="Skapta" />
 
-# Skapta
+# Skapta (In Progress)
 
 **Describe your project. Get the right stack, and a codebase that already runs.**
 
